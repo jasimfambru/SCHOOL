@@ -1,0 +1,119 @@
+import React, { useState } from 'react';
+import { Header } from './components/Header';
+import { Hero } from './components/Hero';
+import { AboutSection } from './components/AboutSection';
+import { ComputerLab } from './components/ComputerLab';
+import { AchievementsSection } from './components/AchievementsSection';
+import { ContactSection } from './components/ContactSection';
+import { Footer } from './components/Footer';
+
+/* Modals & Floating Tools */
+import { AIChatAssistant } from './components/AIChatAssistant';
+import { AdmissionModal } from './components/AdmissionModal';
+import { RouteTrackerModal } from './components/RouteTrackerModal';
+import { PortalLoginModal } from './components/PortalLoginModal';
+import { FeePaymentModal } from './components/FeePaymentModal';
+import { ProspectusModal } from './components/ProspectusModal';
+import { WhatsAppButton } from './components/WhatsAppButton';
+import { BackToTop } from './components/BackToTop';
+
+export const App: React.FC = () => {
+  /* State for Modals */
+  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+  const [isRouteTrackerModalOpen, setIsRouteTrackerModalOpen] = useState(false);
+  const [isPortalModalOpen, setIsPortalModalOpen] = useState(false);
+  const [portalRole, setPortalRole] = useState<'student' | 'parent' | 'teacher'>('student');
+  const [isFeeModalOpen, setIsFeeModalOpen] = useState(false);
+  const [isProspectusModalOpen, setIsProspectusModalOpen] = useState(false);
+
+  const handleOpenPortal = (role: 'student' | 'parent' | 'teacher') => {
+    setPortalRole(role);
+    setIsPortalModalOpen(true);
+  };
+
+  return (
+    <div className="min-h-screen bg-[#FAF9F6] text-slate-800 font-sans selection:bg-blue-500 selection:text-white relative overflow-x-hidden">
+      {/* Global Frosted Glass Ambient Glowing Orbs */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute -top-24 -left-24 w-[500px] h-[500px] bg-blue-400/20 rounded-full blur-[120px]" />
+        <div className="absolute top-1/3 -right-48 w-[600px] h-[600px] bg-emerald-400/15 rounded-full blur-[140px]" />
+        <div className="absolute top-2/3 -left-32 w-[500px] h-[500px] bg-sky-400/15 rounded-full blur-[120px]" />
+        <div className="absolute bottom-10 right-1/4 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px]" />
+      </div>
+
+      <div className="relative z-10">
+        {/* Header Navbar */}
+        <Header
+        onOpenApplyModal={() => setIsApplyModalOpen(true)}
+        onOpenLoginModal={() => handleOpenPortal('student')}
+        onOpenFeeModal={() => setIsFeeModalOpen(true)}
+        onOpenRouteTrackerModal={() => setIsRouteTrackerModalOpen(true)}
+        onOpenProspectusModal={() => setIsProspectusModalOpen(true)}
+        darkMode={false}
+        setDarkMode={() => {}}
+      />
+
+      <main>
+        {/* 3. Hero Banner with Campus Hotspots */}
+        <Hero
+          onOpenApplyModal={() => setIsApplyModalOpen(true)}
+          onOpenProspectusModal={() => setIsProspectusModalOpen(true)}
+        />
+
+        {/* 4. About School & Core Mission */}
+        <AboutSection />
+
+        {/* 5. Next-Gen Computer Laboratory */}
+        <ComputerLab />
+
+        {/* 6. Academic & STEM Hall of Fame */}
+        <AchievementsSection />
+
+        {/* 9. Contact & Admissions Campus Office */}
+        <ContactSection />
+      </main>
+
+      {/* Footer */}
+      <Footer
+        onOpenApplyModal={() => setIsApplyModalOpen(true)}
+        onOpenProspectusModal={() => setIsProspectusModalOpen(true)}
+        onOpenRouteTrackerModal={() => setIsRouteTrackerModalOpen(true)}
+      />
+
+      {/* Floating & Interactive Overlay Widgets */}
+      <AIChatAssistant />
+      <WhatsAppButton />
+      <BackToTop />
+
+      {/* Interactive Modals */}
+      <AdmissionModal
+        isOpen={isApplyModalOpen}
+        onClose={() => setIsApplyModalOpen(false)}
+      />
+
+      <RouteTrackerModal
+        isOpen={isRouteTrackerModalOpen}
+        onClose={() => setIsRouteTrackerModalOpen(false)}
+      />
+
+      <PortalLoginModal
+        isOpen={isPortalModalOpen}
+        onClose={() => setIsPortalModalOpen(false)}
+        initialRole={portalRole}
+      />
+
+      <FeePaymentModal
+        isOpen={isFeeModalOpen}
+        onClose={() => setIsFeeModalOpen(false)}
+      />
+
+      <ProspectusModal
+        isOpen={isProspectusModalOpen}
+        onClose={() => setIsProspectusModalOpen(false)}
+      />
+      </div>
+    </div>
+  );
+};
+
+export default App;

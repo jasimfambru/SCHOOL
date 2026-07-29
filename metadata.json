@@ -1,0 +1,6 @@
+{
+  "name": "Nagarjuna School",
+  "description": "World-class educational institution empowering young minds with AI learning, advanced robotics, digital smart classrooms, and holistic development.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
