@@ -5,12 +5,14 @@ interface PortalLoginModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialRole?: 'student' | 'parent' | 'teacher';
+  onOpenStaffPortal?: () => void;
 }
 
 export const PortalLoginModal: React.FC<PortalLoginModalProps> = ({
   isOpen,
   onClose,
   initialRole = 'student',
+  onOpenStaffPortal,
 }) => {
   const [role, setRole] = useState<'student' | 'parent' | 'teacher'>(initialRole);
   const [username, setUsername] = useState('');
@@ -21,6 +23,13 @@ export const PortalLoginModal: React.FC<PortalLoginModalProps> = ({
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
+    if (role === 'teacher') {
+      onClose();
+      if (onOpenStaffPortal) {
+        onOpenStaffPortal();
+      }
+      return;
+    }
     setIsLoggedIn(true);
   };
 
@@ -90,10 +99,28 @@ export const PortalLoginModal: React.FC<PortalLoginModalProps> = ({
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  {r}
+                  {r === 'teacher' ? 'Staff / Teacher' : r}
                 </button>
               ))}
             </div>
+
+            {role === 'teacher' && (
+              <div className="bg-blue-50 border border-blue-100 p-2.5 rounded-xl text-[11px] text-blue-800 flex items-center justify-between">
+                <span>📸 Upload school events, photos & reports</span>
+                {onOpenStaffPortal && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      onOpenStaffPortal();
+                    }}
+                    className="font-bold text-blue-600 hover:underline shrink-0 ml-2"
+                  >
+                    Event Manager &rarr;
+                  </button>
+                )}
+              </div>
+            )}
 
             <div className="space-y-3 pt-2">
               <div>

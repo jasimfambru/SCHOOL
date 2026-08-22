@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
 import { AboutSection } from './components/AboutSection';
+import { EventsSection } from './components/EventsSection';
+import { StaffEventManagementSection } from './components/StaffEventManagementSection';
 import { ComputerLab } from './components/ComputerLab';
 import { AchievementsSection } from './components/AchievementsSection';
 import { ContactSection } from './components/ContactSection';
@@ -11,24 +13,33 @@ import { Footer } from './components/Footer';
 import { AIChatAssistant } from './components/AIChatAssistant';
 import { AdmissionModal } from './components/AdmissionModal';
 import { RouteTrackerModal } from './components/RouteTrackerModal';
-import { PortalLoginModal } from './components/PortalLoginModal';
 import { FeePaymentModal } from './components/FeePaymentModal';
 import { ProspectusModal } from './components/ProspectusModal';
 import { WhatsAppButton } from './components/WhatsAppButton';
 import { BackToTop } from './components/BackToTop';
+import { EventItem } from './types';
 
 export const App: React.FC = () => {
   /* State for Modals */
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   const [isRouteTrackerModalOpen, setIsRouteTrackerModalOpen] = useState(false);
-  const [isPortalModalOpen, setIsPortalModalOpen] = useState(false);
-  const [portalRole, setPortalRole] = useState<'student' | 'parent' | 'teacher'>('student');
+  const [editingEventForStaff, setEditingEventForStaff] = useState<EventItem | null>(null);
+  const [eventsRefreshKey, setEventsRefreshKey] = useState(0);
   const [isFeeModalOpen, setIsFeeModalOpen] = useState(false);
   const [isProspectusModalOpen, setIsProspectusModalOpen] = useState(false);
 
-  const handleOpenPortal = (role: 'student' | 'parent' | 'teacher') => {
-    setPortalRole(role);
-    setIsPortalModalOpen(true);
+  const handleScrollToStaffEvents = (eventToEdit?: EventItem) => {
+    if (eventToEdit) {
+      setEditingEventForStaff(eventToEdit);
+    }
+    const el = document.getElementById('staff-events');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleEventsUpdated = () => {
+    setEventsRefreshKey((prev) => prev + 1);
   };
 
   return (
@@ -44,73 +55,83 @@ export const App: React.FC = () => {
       <div className="relative z-10">
         {/* Header Navbar */}
         <Header
-        onOpenApplyModal={() => setIsApplyModalOpen(true)}
-        onOpenLoginModal={() => handleOpenPortal('student')}
-        onOpenFeeModal={() => setIsFeeModalOpen(true)}
-        onOpenRouteTrackerModal={() => setIsRouteTrackerModalOpen(true)}
-        onOpenProspectusModal={() => setIsProspectusModalOpen(true)}
-        darkMode={false}
-        setDarkMode={() => {}}
-      />
-
-      <main>
-        {/* 3. Hero Banner with Campus Hotspots */}
-        <Hero
           onOpenApplyModal={() => setIsApplyModalOpen(true)}
+          onOpenStaffPortal={() => handleScrollToStaffEvents()}
+          onOpenFeeModal={() => setIsFeeModalOpen(true)}
+          onOpenRouteTrackerModal={() => setIsRouteTrackerModalOpen(true)}
           onOpenProspectusModal={() => setIsProspectusModalOpen(true)}
+          darkMode={false}
+          setDarkMode={() => {}}
         />
 
-        {/* 4. About School & Core Mission */}
-        <AboutSection />
+        <main>
+          {/* 1. Hero Banner */}
+          <Hero
+            onOpenApplyModal={() => setIsApplyModalOpen(true)}
+            onOpenProspectusModal={() => setIsProspectusModalOpen(true)}
+          />
 
-        {/* 5. Next-Gen Computer Laboratory */}
-        <ComputerLab />
+          {/* 2. School Events, Celebrations & Reports Showcase */}
+          <EventsSection
+            onOpenStaffPortal={() => handleScrollToStaffEvents()}
+            onEditEvent={(evt) => handleScrollToStaffEvents(evt)}
+            refreshTrigger={eventsRefreshKey}
+          />
 
-        {/* 6. Academic & STEM Hall of Fame */}
-        <AchievementsSection />
+          {/* 3. Dedicated Staff Event Login, Editor & Publisher Section */}
+          <StaffEventManagementSection
+            onEventsUpdated={handleEventsUpdated}
+            refreshTrigger={eventsRefreshKey}
+            externalEventToEdit={editingEventForStaff}
+            onClearExternalEdit={() => setEditingEventForStaff(null)}
+          />
 
-        {/* 9. Contact & Admissions Campus Office */}
-        <ContactSection />
-      </main>
+          {/* 4. About School & Core Mission */}
+          <AboutSection />
 
-      {/* Footer */}
-      <Footer
-        onOpenApplyModal={() => setIsApplyModalOpen(true)}
-        onOpenProspectusModal={() => setIsProspectusModalOpen(true)}
-        onOpenRouteTrackerModal={() => setIsRouteTrackerModalOpen(true)}
-      />
+          {/* 5. Next-Gen Computer Laboratory */}
+          <ComputerLab />
 
-      {/* Floating & Interactive Overlay Widgets */}
-      <AIChatAssistant />
-      <WhatsAppButton />
-      <BackToTop />
+          {/* 6. Academic & STEM Hall of Fame */}
+          <AchievementsSection />
 
-      {/* Interactive Modals */}
-      <AdmissionModal
-        isOpen={isApplyModalOpen}
-        onClose={() => setIsApplyModalOpen(false)}
-      />
+          {/* 7. Contact & Admissions Campus Office */}
+          <ContactSection />
+        </main>
 
-      <RouteTrackerModal
-        isOpen={isRouteTrackerModalOpen}
-        onClose={() => setIsRouteTrackerModalOpen(false)}
-      />
+        {/* Footer */}
+        <Footer
+          onOpenApplyModal={() => setIsApplyModalOpen(true)}
+          onOpenProspectusModal={() => setIsProspectusModalOpen(true)}
+          onOpenRouteTrackerModal={() => setIsRouteTrackerModalOpen(true)}
+          onOpenStaffPortal={() => handleScrollToStaffEvents()}
+        />
 
-      <PortalLoginModal
-        isOpen={isPortalModalOpen}
-        onClose={() => setIsPortalModalOpen(false)}
-        initialRole={portalRole}
-      />
+        {/* Floating & Interactive Overlay Widgets */}
+        <AIChatAssistant />
+        <WhatsAppButton />
+        <BackToTop />
 
-      <FeePaymentModal
-        isOpen={isFeeModalOpen}
-        onClose={() => setIsFeeModalOpen(false)}
-      />
+        {/* Interactive Modals */}
+        <AdmissionModal
+          isOpen={isApplyModalOpen}
+          onClose={() => setIsApplyModalOpen(false)}
+        />
 
-      <ProspectusModal
-        isOpen={isProspectusModalOpen}
-        onClose={() => setIsProspectusModalOpen(false)}
-      />
+        <RouteTrackerModal
+          isOpen={isRouteTrackerModalOpen}
+          onClose={() => setIsRouteTrackerModalOpen(false)}
+        />
+
+        <FeePaymentModal
+          isOpen={isFeeModalOpen}
+          onClose={() => setIsFeeModalOpen(false)}
+        />
+
+        <ProspectusModal
+          isOpen={isProspectusModalOpen}
+          onClose={() => setIsProspectusModalOpen(false)}
+        />
       </div>
     </div>
   );

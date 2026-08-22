@@ -2,10 +2,15 @@ export interface EventItem {
   id: string;
   title: string;
   date: string;
-  category: 'Academic' | 'Robotics & AI' | 'Sports' | 'Cultural' | 'Exhibition';
-  description: string;
-  image: string;
+  category: 'Academic' | 'Robotics & AI' | 'Sports' | 'Cultural' | 'Exhibition' | 'Celebration' | 'Annual Day';
+  description: string; // The matter / event writeup / details
+  image: string; // Cover photo
+  galleryImages?: string[]; // Multiple photos uploaded by staff
   location: string;
+  staffInCharge?: string; // Staff member who organized / uploaded the event
+  highlights?: string[]; // Key highlights or prize winners
+  publishedAt?: string;
+  isPublished?: boolean;
 }
 
 export interface NewsItem {

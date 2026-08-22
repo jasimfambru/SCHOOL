@@ -16,12 +16,14 @@ interface FooterProps {
   onOpenApplyModal: () => void;
   onOpenProspectusModal: () => void;
   onOpenRouteTrackerModal: () => void;
+  onOpenStaffPortal?: () => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({
   onOpenApplyModal,
   onOpenProspectusModal,
   onOpenRouteTrackerModal,
+  onOpenStaffPortal,
 }) => {
   return (
     <footer className="bg-white/70 backdrop-blur-2xl text-slate-800 border-t border-white pt-16 pb-8 relative shadow-2xl">
@@ -64,6 +66,7 @@ export const Footer: React.FC<FooterProps> = ({
             <h4 className="font-bold text-slate-900 text-sm mb-4">Quick Links</h4>
             <ul className="space-y-2 text-xs text-slate-600 font-medium">
               <li><a href="#about" className="hover:text-blue-600 transition-colors">About Nagarjuna</a></li>
+              <li><a href="#events" className="hover:text-blue-600 transition-colors">Events & Happenings</a></li>
               <li><a href="#computer-lab" className="hover:text-blue-600 transition-colors">Computer Lab</a></li>
               <li><a href="#achievements" className="hover:text-blue-600 transition-colors">Hall of Fame</a></li>
               <li><a href="#contact" className="hover:text-blue-600 transition-colors">Contact Us</a></li>
@@ -72,11 +75,17 @@ export const Footer: React.FC<FooterProps> = ({
 
           {/* Col 3: Portals & Portals */}
           <div>
-            <h4 className="font-bold text-slate-900 text-sm mb-4">Admissions & Downloads</h4>
+            <h4 className="font-bold text-slate-900 text-sm mb-4">Portals & Downloads</h4>
             <ul className="space-y-2 text-xs text-slate-600 font-medium">
               <li>
                 <button onClick={onOpenApplyModal} className="hover:text-blue-600 transition-colors text-left font-bold text-blue-700">
                   🎓 Online Admission Application
+                </button>
+              </li>
+              <li>
+                <button onClick={onOpenStaffPortal} className="hover:text-blue-600 transition-colors text-left flex items-center gap-1.5 font-semibold text-slate-800">
+                  <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Staff Event Editor & Publisher Hub</span>
                 </button>
               </li>
               <li>
@@ -91,7 +100,6 @@ export const Footer: React.FC<FooterProps> = ({
                   <span>School Bus Route Tracker</span>
                 </button>
               </li>
-              <li><a href="#contact" className="hover:text-blue-600 transition-colors">Contact Admissions Office</a></li>
             </ul>
           </div>
 
