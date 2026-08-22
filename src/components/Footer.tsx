@@ -1,14 +1,11 @@
 import React from 'react';
 import {
   GraduationCap,
-  Mail,
   Phone,
   MapPin,
-  Heart,
   Send,
   FileText,
   Bus,
-  ShieldCheck,
 } from 'lucide-react';
 import { SCHOOL_INFO } from '../data/schoolData';
 
@@ -16,14 +13,12 @@ interface FooterProps {
   onOpenApplyModal: () => void;
   onOpenProspectusModal: () => void;
   onOpenRouteTrackerModal: () => void;
-  onOpenStaffPortal?: () => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({
   onOpenApplyModal,
   onOpenProspectusModal,
   onOpenRouteTrackerModal,
-  onOpenStaffPortal,
 }) => {
   return (
     <footer className="bg-white/70 backdrop-blur-2xl text-slate-800 border-t border-white pt-16 pb-8 relative shadow-2xl">
@@ -73,19 +68,13 @@ export const Footer: React.FC<FooterProps> = ({
             </ul>
           </div>
 
-          {/* Col 3: Portals & Portals */}
+          {/* Col 3: Portals & Downloads */}
           <div>
             <h4 className="font-bold text-slate-900 text-sm mb-4">Portals & Downloads</h4>
             <ul className="space-y-2 text-xs text-slate-600 font-medium">
               <li>
                 <button onClick={onOpenApplyModal} className="hover:text-blue-600 transition-colors text-left font-bold text-blue-700">
                   🎓 Online Admission Application
-                </button>
-              </li>
-              <li>
-                <button onClick={onOpenStaffPortal} className="hover:text-blue-600 transition-colors text-left flex items-center gap-1.5 font-semibold text-slate-800">
-                  <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
-                  <span>Staff Event Editor & Publisher Hub</span>
                 </button>
               </li>
               <li>

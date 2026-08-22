@@ -3,26 +3,12 @@ import {
   GraduationCap,
   Menu,
   X,
-  Phone,
-  Search,
-  User,
-  CreditCard,
-  Compass,
   Sparkles,
-  Bus,
-  FileText,
-  Moon,
-  Sun,
-  ShieldCheck,
-  Cpu,
-  Upload,
 } from 'lucide-react';
 import { SCHOOL_INFO } from '../data/schoolData';
-import { getActiveStaffUser } from '../utils/eventStorage';
 
 interface HeaderProps {
   onOpenApplyModal: () => void;
-  onOpenStaffPortal: () => void;
   onOpenFeeModal: () => void;
   onOpenRouteTrackerModal: () => void;
   onOpenProspectusModal: () => void;
@@ -32,7 +18,6 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
   onOpenApplyModal,
-  onOpenStaffPortal,
   onOpenFeeModal,
   onOpenRouteTrackerModal,
   onOpenProspectusModal,
@@ -41,7 +26,6 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const activeStaff = getActiveStaffUser();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -58,7 +42,6 @@ export const Header: React.FC<HeaderProps> = ({
   const navLinks = [
     { name: 'About', href: '#about' },
     { name: 'Events & Media', href: '#events' },
-    { name: 'Staff Editor Hub', href: '#staff-events' },
     { name: 'Computer Lab', href: '#computer-lab' },
     { name: 'Achievements', href: '#achievements' },
     { name: 'Contact', href: '#contact' },
@@ -98,7 +81,7 @@ export const Header: React.FC<HeaderProps> = ({
               <a
                 key={link.name}
                 href={link.href}
-                className="text-xs xl:text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/70 px-3 py-1.5 rounded-xl transition-all font-semibold"
+                className="text-xs xl:text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/70 px-3.5 py-2 rounded-xl transition-all font-semibold"
               >
                 {link.name}
               </a>
@@ -107,29 +90,9 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Action Buttons */}
           <div className="hidden sm:flex items-center gap-2.5">
-            {/* Staff Event Login / Management Button */}
-            <a
-              href="#staff-events"
-              onClick={(e) => {
-                const el = document.getElementById('staff-events');
-                if (el) {
-                  e.preventDefault();
-                  el.scrollIntoView({ behavior: 'smooth' });
-                }
-              }}
-              className={`flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-xl transition-all border ${
-                activeStaff
-                  ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 shadow-2xs'
-                  : 'text-slate-700 hover:text-blue-600 bg-white hover:bg-slate-50 border-slate-200 shadow-2xs'
-              }`}
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
-              <span>{activeStaff ? `Staff: ${activeStaff.name.split(' ')[0]}` : 'Staff Login & Editor'}</span>
-            </a>
-
             <button
               onClick={onOpenApplyModal}
-              className="flex items-center gap-1.5 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 px-4 py-2 rounded-full shadow-md transition-all hover:scale-105"
+              className="flex items-center gap-1.5 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 px-4 py-2.5 rounded-full shadow-md transition-all hover:scale-105"
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-300" />
               <span>Apply Now</span>
@@ -150,19 +113,6 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Mobile Navigation Drawer */}
         {mobileMenuOpen && (
           <div className="lg:hidden bg-slate-950/95 border-b border-slate-800 backdrop-blur-xl px-4 pt-3 pb-6 space-y-3">
-            <div className="pb-3 border-b border-slate-800">
-              <a
-                href="#staff-events"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full flex items-center justify-center gap-1.5 text-xs font-bold text-sky-300 bg-blue-950/70 border border-blue-800/80 py-2.5 rounded-xl"
-              >
-                <ShieldCheck className="w-4 h-4 text-sky-400" />
-                <span>{activeStaff ? `Staff: ${activeStaff.name}` : 'Staff Login / Event Editor'}</span>
-              </a>
-            </div>
-
             <div className="grid grid-cols-2 gap-2 text-xs font-medium">
               {navLinks.map((link) => (
                 <a
