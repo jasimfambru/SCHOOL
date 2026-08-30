@@ -13,40 +13,22 @@ export interface StaffUser {
   token: string;
 }
 
-export const DEMO_STAFF_ACCOUNTS: StaffUser[] = [
-  {
-    id: 'STAFF-ADMIN',
-    name: 'Dr. Anand Verma',
-    department: 'STEM & Robotics Lab',
-    role: 'Head of Robotics & Event Coordinator',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop',
-    token: 'token-anand-2026',
-  },
-  {
-    id: 'STAFF-CULTURAL',
-    name: 'Mrs. Sunita Rao',
-    department: 'Cultural Committee',
-    role: 'Senior Cultural & Arts In-Charge',
-    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200&auto=format&fit=crop',
-    token: 'token-sunita-2026',
-  },
-  {
-    id: 'STAFF-SPORTS',
-    name: 'Coach Rajesh Nair',
-    department: 'Physical Education & Athletics',
-    role: 'Sports Director',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop',
-    token: 'token-rajesh-2026',
-  },
-  {
-    id: 'PRINCIPAL-01',
-    name: 'Dr. K. Srinivas Rao',
-    department: 'Principal Office',
-    role: 'Principal & Chief Administrator',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200&auto=format&fit=crop',
-    token: 'token-principal-2026',
-  },
-];
+export const STAFF_CREDENTIALS = {
+  email: 'staff@nagarjuna.school',
+  altEmail: 'satff@nagarjuna.school',
+  password: 'staff@2026',
+};
+
+export const PRIMARY_STAFF_ACCOUNT: StaffUser = {
+  id: 'staff@nagarjuna.school',
+  name: 'Faculty Coordinator',
+  department: 'Academic & Events Committee',
+  role: 'Staff Coordinator & Editor',
+  avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop',
+  token: 'token-staff-2026',
+};
+
+export const DEMO_STAFF_ACCOUNTS: StaffUser[] = [PRIMARY_STAFF_ACCOUNT];
 
 export const PRESET_EVENT_IMAGES = [
   {

@@ -34,7 +34,8 @@ import {
   resetStoredEvents,
   getActiveStaffUser,
   setStaffUserSession,
-  DEMO_STAFF_ACCOUNTS,
+  STAFF_CREDENTIALS,
+  PRIMARY_STAFF_ACCOUNT,
   PRESET_EVENT_IMAGES,
   StaffUser,
 } from '../utils/eventStorage';
@@ -136,26 +137,31 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
       return;
     }
 
-    if (!loginStaffId.trim()) {
-      setLoginError('Please enter your Staff ID or registered email.');
+    const emailInput = loginStaffId.trim().toLowerCase();
+    const passInput = loginPassword.trim();
+
+    if (!emailInput) {
+      setLoginError('Please enter the staff email (satff@nagarjuna.school).');
       return;
     }
 
-    const matched = DEMO_STAFF_ACCOUNTS.find(
-      (s) =>
-        s.id.toLowerCase() === loginStaffId.trim().toLowerCase() ||
-        s.name.toLowerCase().includes(loginStaffId.trim().toLowerCase())
-    );
+    if (!passInput) {
+      setLoginError('Please enter the password (staff@2026).');
+      return;
+    }
 
-    const loggedUser: StaffUser = matched || {
-      id: loginStaffId.trim().toUpperCase(),
-      name: loginStaffId.includes('@') ? loginStaffId.split('@')[0] : loginStaffId,
-      department: 'Academic Faculty',
-      role: 'Staff Coordinator & Editor',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop',
-      token: `token-${Date.now()}`,
-    };
+    // Verify against single authorized staff credentials
+    const isEmailMatch =
+      emailInput === STAFF_CREDENTIALS.email.toLowerCase() ||
+      emailInput === STAFF_CREDENTIALS.altEmail.toLowerCase();
+    const isPasswordMatch = passInput === STAFF_CREDENTIALS.password;
 
+    if (!isEmailMatch || !isPasswordMatch) {
+      setLoginError('Invalid credentials! Please use satff@nagarjuna.school and password staff@2026.');
+      return;
+    }
+
+    const loggedUser: StaffUser = PRIMARY_STAFF_ACCOUNT;
     setStaffUserSession(loggedUser);
     setActiveStaff(loggedUser);
     setIsLoginModalOpen(false);
@@ -651,15 +657,15 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
               </button>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/30 border border-blue-400/40 text-sky-200 text-[11px] font-bold uppercase mb-2">
                 <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Faculty Authentication</span>
+                <span>Authorized Staff Portal</span>
               </div>
               <h3 className="text-xl font-black">Staff Event Editor Login</h3>
               <p className="text-xs text-blue-100/90 mt-1 leading-relaxed">
-                Sign in to add new school celebrations, publish event writeups, upload gallery photos, and edit existing records.
+                Sign in with official Nagarjuna staff credentials to publish events, write reports, upload photo albums, and edit event records.
               </p>
             </div>
 
-            <div className="p-6 space-y-5">
+            <div className="p-6 space-y-4">
               {loginError && (
                 <div className="bg-red-50 border border-red-200 text-red-700 text-xs p-3 rounded-xl flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
@@ -667,46 +673,38 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
                 </div>
               )}
 
-              {/* Quick 1-Click Faculty Demo Login */}
-              <div className="space-y-2">
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-                  Quick Demo Faculty Access (1-Click)
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {DEMO_STAFF_ACCOUNTS.map((staff) => (
-                    <button
-                      key={staff.id}
-                      type="button"
-                      onClick={() => handleStaffLogin(staff)}
-                      className="p-2.5 rounded-2xl border border-slate-200 hover:border-blue-500 bg-slate-50/70 hover:bg-blue-50/60 text-left transition-all flex items-center gap-2.5 group"
-                    >
-                      <img
-                        src={staff.avatar}
-                        alt={staff.name}
-                        className="w-9 h-9 rounded-xl object-cover border border-slate-200 group-hover:scale-105 transition-transform"
-                      />
-                      <div className="overflow-hidden">
-                        <div className="text-xs font-bold text-slate-900 group-hover:text-blue-600 truncate">
-                          {staff.name}
-                        </div>
-                        <div className="text-[10px] text-slate-500 truncate">
-                          {staff.department.split(' ')[0]} • {staff.role.split(' ')[0]}
-                        </div>
-                      </div>
-                    </button>
-                  ))}
+              {/* Official Credentials Info & Autofill helper */}
+              <div className="bg-blue-50/80 border border-blue-200/80 rounded-2xl p-3.5 text-xs text-slate-700">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11px] font-bold text-blue-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Staff Login Credentials</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLoginStaffId('satff@nagarjuna.school');
+                      setLoginPassword('staff@2026');
+                      setLoginError('');
+                    }}
+                    className="text-[11px] font-bold text-blue-700 bg-white hover:bg-blue-600 hover:text-white px-2.5 py-1 rounded-lg border border-blue-200 transition-all shadow-2xs"
+                  >
+                    Quick Fill
+                  </button>
+                </div>
+                <div className="space-y-1 font-mono text-[11px] text-slate-800 bg-white/70 p-2 rounded-xl border border-blue-100">
+                  <div>
+                    <span className="text-slate-500 font-sans font-medium">Email: </span>
+                    <strong className="text-blue-900 select-all">satff@nagarjuna.school</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 font-sans font-medium">Password: </span>
+                    <strong className="text-blue-900 select-all">staff@2026</strong>
+                  </div>
                 </div>
               </div>
 
-              <div className="relative flex py-1 items-center">
-                <div className="flex-grow border-t border-slate-200"></div>
-                <span className="flex-shrink mx-3 text-slate-400 text-[11px] font-semibold uppercase">
-                  Or Manual Faculty Login
-                </span>
-                <div className="flex-grow border-t border-slate-200"></div>
-              </div>
-
-              {/* Manual Form */}
+              {/* Login Form */}
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -716,28 +714,30 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
               >
                 <div>
                   <label className="text-xs font-bold text-slate-700 block mb-1">
-                    Staff ID / Official Email
+                    Staff Email
                   </label>
                   <input
-                    type="text"
+                    type="email"
                     value={loginStaffId}
                     onChange={(e) => setLoginStaffId(e.target.value)}
-                    placeholder="e.g. STAFF-ADMIN or your name"
+                    placeholder="satff@nagarjuna.school"
                     className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                    required
                   />
                 </div>
 
                 <div>
                   <label className="text-xs font-bold text-slate-700 block mb-1">
-                    Passcode / Password
+                    Password
                   </label>
                   <div className="relative">
                     <input
                       type="password"
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
-                      placeholder="•••••••• (Any password for demo)"
+                      placeholder="Enter staff@2026"
                       className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl pl-3.5 pr-10 py-2.5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                      required
                     />
                     <Lock className="w-4 h-4 text-slate-400 absolute right-3 top-3" />
                   </div>
@@ -745,10 +745,10 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
 
                 <button
                   type="submit"
-                  className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
+                  className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 hover:scale-[1.02]"
                 >
                   <LogIn className="w-4 h-4" />
-                  <span>Enter Staff Edit Mode</span>
+                  <span>Log In as Staff</span>
                 </button>
               </form>
             </div>
