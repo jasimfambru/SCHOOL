@@ -9,6 +9,7 @@ import {
   Loader2,
   RefreshCw,
 } from 'lucide-react';
+import { SCHOOL_INFO } from '../data/schoolData';
 
 export const AIChatAssistant: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -52,7 +53,7 @@ export const AIChatAssistant: React.FC = () => {
       });
 
       const data = await response.json();
-      const replyText = data.reply || "Nagarjuna School admissions are open for Nursery to Class XII! Feel free to visit our campus or call our helpline at +91 98765 43210.";
+      const replyText = data.reply || `Nagarjuna School admissions are open for Nursery to Class XII! Feel free to visit our campus at ${SCHOOL_INFO.address} or call our helpline at ${SCHOOL_INFO.phone}.`;
 
       setMessages((prev) => [
         ...prev,
@@ -63,7 +64,7 @@ export const AIChatAssistant: React.FC = () => {
         ...prev,
         {
           sender: 'ai',
-          text: "Thank you for asking! For direct admission guidance, you can also reach our desk at admissions@nagarjunaschool.edu.in or call +91 98765 43210.",
+          text: `Thank you for asking! For direct admission guidance, you can also reach our desk at ${SCHOOL_INFO.email} or call / WhatsApp ${SCHOOL_INFO.phone}.`,
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         },
       ]);

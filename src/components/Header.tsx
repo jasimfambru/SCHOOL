@@ -90,6 +90,15 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Action Buttons */}
           <div className="hidden sm:flex items-center gap-2.5">
+            <a
+              href={`https://wa.me/${SCHOOL_INFO.whatsapp}?text=Hello%20Nagarjuna%20School,%20I%20would%20like%20to%20know%20details%20of%20the%20school%20and%20admissions.`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden xl:flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 px-3.5 py-2 rounded-full transition-all"
+              title="Chat on WhatsApp for School Details & Admissions"
+            >
+              <span>💬 WhatsApp Admissions</span>
+            </a>
             <button
               onClick={onOpenApplyModal}
               className="flex items-center gap-1.5 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 px-4 py-2.5 rounded-full shadow-md transition-all hover:scale-105"
@@ -127,6 +136,22 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
 
             <div className="pt-2 flex flex-col gap-2">
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <a
+                  href={`tel:${SCHOOL_INFO.phoneRaw}`}
+                  className="text-center py-2 px-3 rounded-xl bg-slate-800 text-slate-200 hover:text-white font-semibold flex items-center justify-center gap-1"
+                >
+                  📞 {SCHOOL_INFO.phone}
+                </a>
+                <a
+                  href={`https://wa.me/${SCHOOL_INFO.whatsapp}?text=Hello%20Nagarjuna%20School,%20I%20would%20like%20to%20know%20details%20of%20the%20school%20and%20admissions.`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-center py-2 px-3 rounded-xl bg-emerald-800/80 text-emerald-100 hover:bg-emerald-700 font-semibold flex items-center justify-center gap-1"
+                >
+                  💬 WhatsApp
+                </a>
+              </div>
               <button
                 onClick={() => {
                   setMobileMenuOpen(false);

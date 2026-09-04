@@ -51,9 +51,17 @@ export const ContactSection: React.FC = () => {
                 </div>
                 <div>
                   <h4 className="font-bold text-slate-900 text-sm">Campus Address</h4>
-                  <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">
+                  <p className="text-xs text-slate-600 mt-0.5 leading-relaxed font-medium">
                     {SCHOOL_INFO.address}
                   </p>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(SCHOOL_INFO.address)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block text-[11px] text-blue-600 font-bold hover:underline mt-1"
+                  >
+                    📍 Open in Google Maps &rarr;
+                  </a>
                 </div>
               </div>
 
@@ -61,9 +69,24 @@ export const ContactSection: React.FC = () => {
                 <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 font-bold">
                   <Phone className="w-5 h-5" />
                 </div>
-                <div>
-                  <h4 className="font-bold text-slate-900 text-sm">Phone Helpline</h4>
-                  <p className="text-xs text-slate-600 mt-0.5">{SCHOOL_INFO.phone}</p>
+                <div className="flex-1">
+                  <h4 className="font-bold text-slate-900 text-sm">Mobile & WhatsApp Helpline</h4>
+                  <div className="flex flex-wrap items-center gap-2 mt-1">
+                    <a
+                      href={`tel:${SCHOOL_INFO.phoneRaw}`}
+                      className="text-xs text-slate-900 font-bold hover:text-blue-600 transition-colors"
+                    >
+                      {SCHOOL_INFO.phone}
+                    </a>
+                    <a
+                      href={`https://wa.me/${SCHOOL_INFO.whatsapp}?text=Hello%20Nagarjuna%20School,%20I%20would%20like%20to%20know%20details%20of%20the%20school%20and%20admissions.`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-100/80 hover:bg-emerald-200 px-2 py-0.5 rounded-md transition-colors"
+                    >
+                      💬 WhatsApp Us
+                    </a>
+                  </div>
                 </div>
               </div>
 
@@ -88,11 +111,11 @@ export const ContactSection: React.FC = () => {
               </div>
             </div>
 
-            {/* Google Map Frame Simulator */}
+            {/* Google Map Frame */}
             <div className="rounded-3xl overflow-hidden border border-white aspect-[16/9] relative bg-white/50 backdrop-blur-md shadow-md p-2">
               <iframe
-                title="Nagarjuna School Campus Location"
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3806.497782928509!2d78.3845!3d17.435!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTfCsDI2JzA2LjAiTiA3OMKwMjMnMDQuMiJF!5e0!3m2!1sen!2sin!4v1650000000000!5m2!1sen!2sin"
+                title="Nagarjuna School Campus Location - Kandukur"
+                src={`https://maps.google.com/maps?q=Pampu+Road,+NTR+Nagar,+Kandukur+523105,+Andhra+Pradesh&t=&z=15&ie=UTF8&iwloc=&output=embed`}
                 className="w-full h-full border-0 rounded-2xl"
                 loading="lazy"
               ></iframe>
@@ -152,7 +175,7 @@ export const ContactSection: React.FC = () => {
                       required
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      placeholder="+91 98765 43210"
+                      placeholder="+91 91822 94787"
                       className="w-full bg-white/90 border border-slate-200/80 rounded-2xl px-4 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 shadow-xs font-medium"
                     />
                   </div>

@@ -45,14 +45,32 @@ export const Footer: React.FC<FooterProps> = ({
             </p>
 
             <div className="pt-2 text-xs text-slate-700 space-y-1.5 font-medium">
-              <p className="flex items-center gap-2">
-                <MapPin className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(SCHOOL_INFO.address)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-start gap-2 hover:text-blue-600 transition-colors"
+              >
+                <MapPin className="w-3.5 h-3.5 text-blue-600 shrink-0 mt-0.5" />
                 <span>{SCHOOL_INFO.address}</span>
-              </p>
-              <p className="flex items-center gap-2">
-                <Phone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                <span>{SCHOOL_INFO.phone}</span>
-              </p>
+              </a>
+              <div className="flex flex-wrap items-center gap-3 pt-1">
+                <a
+                  href={`tel:${SCHOOL_INFO.phoneRaw}`}
+                  className="flex items-center gap-1.5 hover:text-blue-600 transition-colors font-bold text-slate-900"
+                >
+                  <Phone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span>{SCHOOL_INFO.phone}</span>
+                </a>
+                <a
+                  href={`https://wa.me/${SCHOOL_INFO.whatsapp}?text=Hello%20Nagarjuna%20School,%20I%20would%20like%20to%20know%20details%20of%20the%20school%20and%20admissions.`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[11px] text-emerald-700 font-bold bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded-md transition-colors"
+                >
+                  💬 Chat on WhatsApp
+                </a>
+              </div>
             </div>
           </div>
 
