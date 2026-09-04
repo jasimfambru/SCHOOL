@@ -7,16 +7,17 @@ import {
   GraduationCap,
   BookOpen,
   Building,
-  Bus,
-  Atom,
   Trophy,
   ArrowRight,
   ShieldCheck,
   Zap,
   Play,
   CheckCircle,
+  Monitor,
+  Award,
 } from 'lucide-react';
 import { SCHOOL_INFO } from '../data/schoolData';
+import { getStoredEvents } from '../utils/eventStorage';
 
 interface HeroProps {
   onOpenApplyModal: () => void;
@@ -26,14 +27,18 @@ interface HeroProps {
 type CampusHotspot =
   | 'building'
   | 'robotics'
+  | 'smart_classroom'
   | 'computer'
   | 'playground'
-  | 'bus'
-  | 'library'
-  | 'science';
+  | 'auditorium'
+  | 'events';
 
 export const Hero: React.FC<HeroProps> = ({ onOpenApplyModal, onOpenProspectusModal }) => {
   const [activeHotspot, setActiveHotspot] = useState<CampusHotspot>('robotics');
+
+  const storedEvents = getStoredEvents();
+  const latestEvent = storedEvents[0];
+  const eventDisplayImage = latestEvent?.image || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=1200&auto=format&fit=crop';
 
   const hotspots = [
     {
@@ -44,7 +49,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenApplyModal, onOpenProspectusMo
       badge: 'STEM & AI',
       title: 'Advanced Robotics & AI Center',
       desc: 'Arduino, LEGO Mindstorms, 3D printing, Python programming, and autonomous drone kits.',
-      image: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?q=80&w=800&auto=format&fit=crop',
+      image: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?q=80&w=1200&auto=format&fit=crop',
     },
     {
       id: 'building' as CampusHotspot,
@@ -53,8 +58,18 @@ export const Hero: React.FC<HeroProps> = ({ onOpenApplyModal, onOpenProspectusMo
       color: 'from-sky-500 to-blue-600',
       badge: 'Eco-Friendly',
       title: 'Nagarjuna Green Campus',
-      desc: '15-acre sprawling Wi-Fi campus with solar architecture and climate-controlled smart classrooms.',
-      image: 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?q=80&w=800&auto=format&fit=crop',
+      desc: '15-acre sprawling Wi-Fi campus with solar architecture and climate-controlled academic facilities in Kandukur.',
+      image: 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?q=80&w=1200&auto=format&fit=crop',
+    },
+    {
+      id: 'smart_classroom' as CampusHotspot,
+      label: 'Smart Classrooms',
+      icon: Monitor,
+      color: 'from-amber-500 to-orange-500',
+      badge: '4K Interactive',
+      title: 'Digital Smart Classrooms',
+      desc: 'Interactive 4K flat panels, ergonomic digital stations, and immersive visual curriculum modules.',
+      image: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=1200&auto=format&fit=crop',
     },
     {
       id: 'computer' as CampusHotspot,
@@ -64,7 +79,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenApplyModal, onOpenProspectusMo
       badge: 'High-Tech',
       title: 'Digital Computer Labs',
       desc: 'High-speed gigabit workstations, cloud coding environments, and cyber safety training.',
-      image: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=800&auto=format&fit=crop',
+      image: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=1200&auto=format&fit=crop',
     },
     {
       id: 'playground' as CampusHotspot,
@@ -74,37 +89,27 @@ export const Hero: React.FC<HeroProps> = ({ onOpenApplyModal, onOpenProspectusMo
       badge: 'Olympic Turf',
       title: 'Multi-Sport Complex',
       desc: 'Football synthetic pitch, floodlit basketball courts, cricket nets, and running track.',
-      image: 'https://images.unsplash.com/photo-1526232761682-d26e03ac148e?q=80&w=800&auto=format&fit=crop',
+      image: 'https://images.unsplash.com/photo-1526232761682-d26e03ac148e?q=80&w=1200&auto=format&fit=crop',
     },
     {
-      id: 'bus' as CampusHotspot,
-      label: 'GPS Bus Fleet',
-      icon: Bus,
-      color: 'from-amber-500 to-orange-500',
-      badge: 'GPS Safe',
-      title: 'AC Smart School Buses',
-      desc: 'Real-time parent GPS tracking app, speed governors, female attendants, and CCTV.',
-      image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=800&auto=format&fit=crop',
-    },
-    {
-      id: 'library' as CampusHotspot,
-      label: 'Digital Library',
-      icon: BookOpen,
+      id: 'auditorium' as CampusHotspot,
+      label: 'Grand Auditorium',
+      icon: Award,
       color: 'from-purple-500 to-indigo-600',
-      badge: 'Knowledge Hub',
-      title: 'Grand Library & E-Pods',
-      desc: '25,000+ volumes, global e-journals, research pods, and quiet reading lounges.',
-      image: 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?q=80&w=800&auto=format&fit=crop',
+      badge: 'Acoustic Hall',
+      title: '1,200-Seat Grand Auditorium',
+      desc: 'Acoustically engineered amphitheater for student theatre, annual day galas, and guest lectures.',
+      image: 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?q=80&w=1200&auto=format&fit=crop',
     },
     {
-      id: 'science' as CampusHotspot,
-      label: 'Science Labs',
-      icon: Atom,
-      color: 'from-blue-600 to-teal-500',
-      badge: 'Research Lab',
-      title: 'Physics, Chemistry & Biology',
-      desc: 'Hands-on experiment stations, digital sensor loggers, and safety certified workspace.',
-      image: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?q=80&w=800&auto=format&fit=crop',
+      id: 'events' as CampusHotspot,
+      label: 'Campus Celebrations',
+      icon: Sparkles,
+      color: 'from-rose-500 to-pink-600',
+      badge: 'Live Events',
+      title: latestEvent ? latestEvent.title : 'Annual Day & Cultural Celebrations',
+      desc: latestEvent ? latestEvent.description : 'National festivities, Independence Day parade, sports meet, and vibrant cultural showcases.',
+      image: eventDisplayImage,
     },
   ];
 
