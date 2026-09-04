@@ -229,7 +229,7 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
     setFormLocation('Main Campus Auditorium & Quadrangle');
     setFormStaffInCharge(activeStaff?.name || 'Staff Coordinator');
     setFormDescription('');
-    setFormImage(PRESET_EVENT_IMAGES[0].url);
+    setFormImage('');
     setFormGalleryImages([]);
     setFormHighlights(['Active Student Participation', 'Faculty Coordination']);
     setFormNotification(null);
@@ -1243,51 +1243,100 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
 
                 {/* Preset Library Mode */}
                 {imageTab === 'preset' && (
-                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-36 overflow-y-auto p-1 bg-white rounded-xl border border-slate-200">
-                    {PRESET_EVENT_IMAGES.map((img, i) => (
-                      <div
-                        key={i}
-                        onClick={() => setFormImage(img.url)}
-                        className={`relative aspect-video rounded-lg overflow-hidden cursor-pointer border-2 transition-all ${
-                          formImage === img.url ? 'border-blue-600 scale-95' : 'border-transparent opacity-70 hover:opacity-100'
-                        }`}
-                      >
-                        <img src={img.url} alt={img.label} className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/40 flex items-end p-1">
-                          <span className="text-[8px] text-white font-bold truncate">{img.label}</span>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium">
+                      <span>Click to select cover (click again to deselect):</span>
+                      {formImage && (
+                        <button
+                          type="button"
+                          onClick={() => setFormImage('')}
+                          className="text-[10px] font-bold text-red-600 hover:text-red-700 hover:underline"
+                        >
+                          Clear Selection
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-36 overflow-y-auto p-1 bg-white rounded-xl border border-slate-200">
+                      {PRESET_EVENT_IMAGES.map((img, i) => {
+                        const isSelected = formImage === img.url;
+                        return (
+                          <div
+                            key={i}
+                            onClick={() => setFormImage(isSelected ? '' : img.url)}
+                            className={`relative aspect-video rounded-lg overflow-hidden cursor-pointer border-2 transition-all ${
+                              isSelected ? 'border-blue-600 ring-2 ring-blue-400/50 scale-95' : 'border-transparent opacity-70 hover:opacity-100'
+                            }`}
+                          >
+                            <img src={img.url} alt={img.label} className="w-full h-full object-cover" />
+                            {isSelected && (
+                              <div className="absolute top-1 right-1 bg-blue-600 text-white rounded-full p-0.5 shadow">
+                                <Check className="w-2.5 h-2.5" />
+                              </div>
+                            )}
+                            <div className="absolute inset-0 bg-black/40 flex items-end p-1">
+                              <span className="text-[8px] text-white font-bold truncate">{img.label}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
 
                 {/* URL Mode */}
                 {imageTab === 'url' && (
-                  <div>
+                  <div className="flex gap-2">
                     <input
                       type="url"
                       value={formImage}
                       onChange={(e) => setFormImage(e.target.value)}
                       placeholder="https://images.unsplash.com/..."
-                      className="w-full text-xs bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                      className="flex-1 text-xs bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                     />
+                    {formImage && (
+                      <button
+                        type="button"
+                        onClick={() => setFormImage('')}
+                        className="px-3 py-2 text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 rounded-xl transition-colors shrink-0"
+                      >
+                        Clear
+                      </button>
+                    )}
                   </div>
                 )}
 
-                {/* Preview Selected Cover */}
-                {formImage && (
-                  <div className="flex items-center gap-3 bg-white p-2.5 rounded-xl border border-slate-200">
-                    <img src={formImage} alt="Cover Preview" className="w-16 h-12 rounded-lg object-cover border" />
-                    <div className="text-xs">
-                      <span className="font-bold text-slate-800 block">Selected Cover Preview</span>
-                      <span className="text-[10px] text-emerald-600 font-semibold">✓ Ready for publication</span>
+                {/* Preview Selected Cover with Remove Option */}
+                {formImage ? (
+                  <div className="flex items-center justify-between gap-3 bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <img src={formImage} alt="Cover Preview" className="w-16 h-12 rounded-lg object-cover border shrink-0" />
+                      <div className="text-xs min-w-0">
+                        <span className="font-bold text-slate-800 block truncate">Selected Cover Preview</span>
+                        <span className="text-[10px] text-emerald-600 font-semibold">✓ Ready for publication</span>
+                      </div>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormImage('');
+                        if (fileInputRef.current) fileInputRef.current.value = '';
+                      }}
+                      className="shrink-0 text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
+                      title="Remove this selected cover photo"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Remove Cover</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="p-2.5 bg-slate-100/70 border border-dashed border-slate-200 rounded-xl text-xs text-slate-500 flex items-center justify-between">
+                    <span>No cover photo selected. Upload from device, pick a preset, or paste a URL.</span>
                   </div>
                 )}
 
                 {/* Extra Gallery Photos */}
                 <div className="pt-2 border-t border-slate-200">
-                  <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1">
                     <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
                       <span>Multi-Photo Gallery Album ({formGalleryImages.length} photos)</span>
                       {isFirebaseConnected && (
@@ -1296,28 +1345,42 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
                         </span>
                       )}
                     </span>
-                    <button
-                      type="button"
-                      disabled={isUploadingGallery}
-                      onClick={() => galleryFileInputRef.current?.click()}
-                      className={`text-[10px] font-bold flex items-center gap-1 px-2 py-0.5 rounded-lg border transition-all ${
-                        isUploadingGallery
-                          ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
-                          : 'bg-white text-blue-600 hover:text-blue-700 border-blue-200 hover:bg-blue-50'
-                      }`}
-                    >
-                      {isUploadingGallery ? (
-                        <>
-                          <Loader2 className="w-3 h-3 animate-spin text-blue-600" />
-                          <span>Uploading...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="w-3 h-3" />
-                          <span>Upload More Photos</span>
-                        </>
+                    <div className="flex items-center gap-2">
+                      {formGalleryImages.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormGalleryImages([]);
+                            if (galleryFileInputRef.current) galleryFileInputRef.current.value = '';
+                          }}
+                          className="text-[10px] font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 px-2 py-0.5 rounded-lg transition-colors"
+                        >
+                          Clear All Photos
+                        </button>
                       )}
-                    </button>
+                      <button
+                        type="button"
+                        disabled={isUploadingGallery}
+                        onClick={() => galleryFileInputRef.current?.click()}
+                        className={`text-[10px] font-bold flex items-center gap-1 px-2 py-0.5 rounded-lg border transition-all ${
+                          isUploadingGallery
+                            ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                            : 'bg-white text-blue-600 hover:text-blue-700 border-blue-200 hover:bg-blue-50'
+                        }`}
+                      >
+                        {isUploadingGallery ? (
+                          <>
+                            <Loader2 className="w-3 h-3 animate-spin text-blue-600" />
+                            <span>Uploading...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="w-3 h-3" />
+                            <span>Upload More Photos</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
                     <input
                       ref={galleryFileInputRef}
                       type="file"
