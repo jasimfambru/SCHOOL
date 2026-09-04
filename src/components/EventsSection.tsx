@@ -24,6 +24,12 @@ import {
   Camera,
   Check,
   AlertCircle,
+  Cloud,
+  Database,
+  Key,
+  Loader2,
+  ExternalLink,
+  CheckCircle2,
 } from 'lucide-react';
 import { EventItem } from '../types';
 import {
@@ -39,6 +45,14 @@ import {
   PRESET_EVENT_IMAGES,
   StaffUser,
 } from '../utils/eventStorage';
+import {
+  isFirebaseConfigured,
+  getFirebaseConfig,
+  saveCustomFirebaseConfig,
+  clearCustomFirebaseConfig,
+  uploadEventPhotoToFirebase,
+  FirebaseClientConfig,
+} from '../utils/firebase';
 
 interface EventsSectionProps {
   refreshTrigger?: number;
@@ -81,15 +95,44 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const galleryFileInputRef = useRef<HTMLInputElement>(null);
 
+  // Firebase Cloud Storage Modal & States
+  const [isFirebaseConnected, setIsFirebaseConnected] = useState<boolean>(false);
+  const [isFirebaseModalOpen, setIsFirebaseModalOpen] = useState(false);
+  const [fbApiKey, setFbApiKey] = useState('');
+  const [fbProjectId, setFbProjectId] = useState('');
+  const [fbStorageBucket, setFbStorageBucket] = useState('');
+  const [fbAuthDomain, setFbAuthDomain] = useState('');
+  const [fbAppId, setFbAppId] = useState('');
+  const [fbJsonInput, setFbJsonInput] = useState('');
+  const [fbModalTab, setFbModalTab] = useState<'paste' | 'fields' | 'guide'>('paste');
+  const [fbStatusMessage, setFbStatusMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  // Photo Upload Progress States
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
+  const [isUploadingGallery, setIsUploadingGallery] = useState(false);
+  const [uploadStatusBanner, setUploadStatusBanner] = useState<{ text: string; type: 'info' | 'success' | 'warning' } | null>(null);
+
   // Delete confirmation
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
-  // Load events & active session
+  // Load events & active session & Firebase status
   useEffect(() => {
     const data = getStoredEvents();
     setEvents(data);
     const staff = getActiveStaffUser();
     setActiveStaff(staff);
+
+    // Check Firebase configuration
+    const connected = isFirebaseConfigured();
+    setIsFirebaseConnected(connected);
+    const cfg = getFirebaseConfig();
+    if (cfg) {
+      setFbApiKey(cfg.apiKey || '');
+      setFbProjectId(cfg.projectId || '');
+      setFbStorageBucket(cfg.storageBucket || '');
+      setFbAuthDomain(cfg.authDomain || '');
+      setFbAppId(cfg.appId || '');
+    }
   }, [refreshTrigger]);
 
   const categories = [
@@ -263,10 +306,118 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
     }
   };
 
-  // Handle Local File Upload for Cover Image
-  const handleCoverFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Firebase Configuration Handlers
+  const handleSaveFirebaseConfig = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setFbStatusMessage(null);
+
+    let parsedConfig: FirebaseClientConfig;
+
+    if (fbModalTab === 'paste') {
+      if (!fbJsonInput.trim()) {
+        setFbStatusMessage({ text: 'Please paste your Firebase configuration snippet or JSON.', type: 'error' });
+        return;
+      }
+
+      try {
+        let clean = fbJsonInput.trim();
+        // Extract object if formatted as const firebaseConfig = { ... }
+        if (clean.includes('{') && clean.includes('}')) {
+          clean = clean.substring(clean.indexOf('{'), clean.lastIndexOf('}') + 1);
+        }
+        // Normalize keys and single quotes
+        const sanitized = clean
+          .replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, '$1"$2":')
+          .replace(/'/g, '"');
+        const obj = JSON.parse(sanitized);
+
+        if (!obj.apiKey || !obj.projectId) {
+          throw new Error('Missing apiKey or projectId');
+        }
+
+        parsedConfig = {
+          apiKey: obj.apiKey.trim(),
+          authDomain: (obj.authDomain || `${obj.projectId}.firebaseapp.com`).trim(),
+          projectId: obj.projectId.trim(),
+          storageBucket: (obj.storageBucket || `${obj.projectId}.firebasestorage.app`).trim(),
+          messagingSenderId: (obj.messagingSenderId || '').trim(),
+          appId: (obj.appId || '').trim(),
+        };
+      } catch (err: any) {
+        setFbStatusMessage({
+          text: 'Could not parse config snippet. Try the "Manual Form" tab or ensure your snippet has apiKey, projectId, and storageBucket.',
+          type: 'error',
+        });
+        return;
+      }
+    } else {
+      if (!fbApiKey.trim() || !fbProjectId.trim()) {
+        setFbStatusMessage({ text: 'API Key and Project ID are required.', type: 'error' });
+        return;
+      }
+      parsedConfig = {
+        apiKey: fbApiKey.trim(),
+        authDomain: fbAuthDomain.trim() || `${fbProjectId.trim()}.firebaseapp.com`,
+        projectId: fbProjectId.trim(),
+        storageBucket: fbStorageBucket.trim() || `${fbProjectId.trim()}.firebasestorage.app`,
+        messagingSenderId: '',
+        appId: fbAppId.trim(),
+      };
+    }
+
+    saveCustomFirebaseConfig(parsedConfig);
+    setIsFirebaseConnected(true);
+    setFbApiKey(parsedConfig.apiKey);
+    setFbProjectId(parsedConfig.projectId);
+    setFbStorageBucket(parsedConfig.storageBucket);
+    setFbStatusMessage({
+      text: `Connected to Firebase project "${parsedConfig.projectId}"! Event photos will now upload directly to your Firebase Storage bucket.`,
+      type: 'success',
+    });
+  };
+
+  const handleDisconnectFirebase = () => {
+    if (window.confirm('Disconnect your Firebase configuration from this browser session?')) {
+      clearCustomFirebaseConfig();
+      setIsFirebaseConnected(false);
+      setFbApiKey('');
+      setFbProjectId('');
+      setFbStorageBucket('');
+      setFbJsonInput('');
+      setFbStatusMessage(null);
+    }
+  };
+
+  // Handle Cover Photo Upload (Direct to Firebase Storage if configured, fallback to local dataURL)
+  const handleCoverFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (!file) return;
+
+    if (isFirebaseConfigured()) {
+      setIsUploadingCover(true);
+      setUploadStatusBanner({ text: 'Uploading cover photo directly to your Firebase Cloud Storage bucket...', type: 'info' });
+      try {
+        const downloadUrl = await uploadEventPhotoToFirebase(file, file.name);
+        setFormImage(downloadUrl);
+        setUploadStatusBanner({ text: 'Cover photo successfully stored in your Firebase Cloud Storage!', type: 'success' });
+        setTimeout(() => setUploadStatusBanner(null), 4000);
+      } catch (err: any) {
+        console.warn('Firebase Storage upload error, falling back to local file:', err);
+        const reader = new FileReader();
+        reader.onload = () => {
+          if (typeof reader.result === 'string') {
+            setFormImage(reader.result);
+          }
+        };
+        reader.readAsDataURL(file);
+        setUploadStatusBanner({
+          text: `Saved locally. Note: Firebase Storage upload error (${err?.message || 'Check Storage Rules in Firebase Console'}).`,
+          type: 'warning',
+        });
+      } finally {
+        setIsUploadingCover(false);
+      }
+    } else {
       const reader = new FileReader();
       reader.onload = () => {
         if (typeof reader.result === 'string') {
@@ -277,10 +428,40 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
     }
   };
 
-  // Handle Multi Photo Upload for Gallery
-  const handleGalleryFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle Multi Photo Upload for Gallery (Direct to Firebase Storage if configured)
+  const handleGalleryFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files && files.length > 0) {
+    if (!files || files.length === 0) return;
+
+    if (isFirebaseConfigured()) {
+      setIsUploadingGallery(true);
+      setUploadStatusBanner({ text: `Uploading ${files.length} photo(s) to your Firebase Cloud Storage...`, type: 'info' });
+      try {
+        const fileList = Array.from(files) as File[];
+        const uploadPromises = fileList.map((f: File) => uploadEventPhotoToFirebase(f, f.name));
+        const urls = await Promise.all(uploadPromises);
+        setFormGalleryImages((prev) => [...prev, ...urls]);
+        setUploadStatusBanner({ text: `Successfully uploaded ${files.length} photo(s) to your Firebase Storage bucket!`, type: 'success' });
+        setTimeout(() => setUploadStatusBanner(null), 4000);
+      } catch (err: any) {
+        console.warn('Firebase gallery upload error, falling back to local files:', err);
+        Array.from(files).forEach((file: File) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            if (typeof reader.result === 'string') {
+              setFormGalleryImages((prev) => [...prev, reader.result as string]);
+            }
+          };
+          reader.readAsDataURL(file);
+        });
+        setUploadStatusBanner({
+          text: `Saved locally. Note: Firebase Storage upload error (${err?.message || 'Check Storage Rules'}).`,
+          type: 'warning',
+        });
+      } finally {
+        setIsUploadingGallery(false);
+      }
+    } else {
       Array.from(files).forEach((file: File) => {
         const reader = new FileReader();
         reader.onload = () => {
@@ -402,7 +583,29 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
                 Staff Editing Mode is <strong>Active</strong>. You can add new events, update writeups/photos, or delete obsolete event records.
               </span>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 shrink-0 flex-wrap">
+              {/* Firebase Cloud Storage Connection Status Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  setFbStatusMessage(null);
+                  setIsFirebaseModalOpen(true);
+                }}
+                className={`text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-2xs transition-all ${
+                  isFirebaseConnected
+                    ? 'bg-emerald-500/25 hover:bg-emerald-500/35 text-emerald-100 border border-emerald-400/40'
+                    : 'bg-amber-400 text-slate-900 hover:bg-amber-300 font-black'
+                }`}
+                title="Connect or configure your Firebase Storage"
+              >
+                <Cloud className="w-3.5 h-3.5" />
+                <span>
+                  {isFirebaseConnected
+                    ? `Firebase Storage: Linked (${fbProjectId})`
+                    : '⚡ Connect Firebase Storage'}
+                </span>
+              </button>
+
               <button
                 onClick={handleOpenCreateModal}
                 className="bg-white text-blue-700 hover:bg-blue-50 text-xs font-bold px-3 py-1.5 rounded-xl shadow-xs flex items-center gap-1.5"
@@ -913,13 +1116,35 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
 
               {/* Row 4: Cover Image & Gallery Photos */}
               <div className="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                    <Camera className="w-4 h-4 text-blue-600" />
-                    <span>Event Cover Photo & Gallery</span>
-                  </label>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <label className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                      <Camera className="w-4 h-4 text-blue-600" />
+                      <span>Event Cover Photo & Gallery</span>
+                    </label>
+                    <div className="mt-0.5 flex items-center gap-1.5">
+                      {isFirebaseConnected ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                          <Cloud className="w-3 h-3 text-emerald-600" />
+                          <span>Firebase Cloud Storage active ({fbProjectId})</span>
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFbStatusMessage(null);
+                            setIsFirebaseModalOpen(true);
+                          }}
+                          className="inline-flex items-center gap-1 text-[10px] text-amber-800 font-bold bg-amber-50 hover:bg-amber-100 px-2 py-0.5 rounded-md border border-amber-200 transition-colors"
+                        >
+                          <Cloud className="w-3 h-3 text-amber-600" />
+                          <span>Local mode • Click to connect Firebase Storage</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
 
-                  <div className="flex rounded-lg bg-slate-200/80 p-0.5 text-[11px] font-bold">
+                  <div className="flex rounded-lg bg-slate-200/80 p-0.5 text-[11px] font-bold self-start sm:self-auto">
                     <button
                       type="button"
                       onClick={() => setImageTab('upload')}
@@ -950,20 +1175,65 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
                   </div>
                 </div>
 
+                {/* Upload Status Banner */}
+                {uploadStatusBanner && (
+                  <div
+                    className={`text-xs p-2.5 rounded-xl border flex items-center justify-between gap-2 ${
+                      uploadStatusBanner.type === 'success'
+                        ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                        : uploadStatusBanner.type === 'warning'
+                        ? 'bg-amber-50 border-amber-200 text-amber-900'
+                        : 'bg-blue-50 border-blue-200 text-blue-800'
+                    }`}
+                  >
+                    <span className="leading-snug">{uploadStatusBanner.text}</span>
+                    <button
+                      type="button"
+                      onClick={() => setUploadStatusBanner(null)}
+                      className="text-slate-400 hover:text-slate-700 font-bold px-1"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
+
+                {/* Loading spinner during upload */}
+                {(isUploadingCover || isUploadingGallery) && (
+                  <div className="bg-blue-50 border border-blue-200 text-blue-900 text-xs p-3 rounded-xl flex items-center gap-2.5">
+                    <Loader2 className="w-4 h-4 animate-spin text-blue-600 shrink-0" />
+                    <span className="font-semibold">
+                      Uploading to your Firebase Cloud Storage bucket... please wait.
+                    </span>
+                  </div>
+                )}
+
                 {/* Upload Mode */}
                 {imageTab === 'upload' && (
                   <div className="space-y-2">
                     <div
-                      onClick={() => fileInputRef.current?.click()}
-                      className="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-xl p-4 text-center cursor-pointer bg-white transition-colors"
+                      onClick={() => !isUploadingCover && fileInputRef.current?.click()}
+                      className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-colors bg-white ${
+                        isUploadingCover
+                          ? 'border-blue-300 opacity-60 cursor-not-allowed'
+                          : 'border-slate-300 hover:border-blue-500'
+                      }`}
                     >
                       <Upload className="w-6 h-6 text-slate-400 mx-auto mb-1" />
-                      <p className="text-xs font-bold text-slate-700">Click to upload cover image from device</p>
-                      <p className="text-[10px] text-slate-400">PNG, JPG, WebP supported</p>
+                      <p className="text-xs font-bold text-slate-700">
+                        {isFirebaseConnected
+                          ? 'Click to upload cover photo to your Firebase Cloud Storage'
+                          : 'Click to upload cover image from device'}
+                      </p>
+                      <p className="text-[10px] text-slate-400">
+                        {isFirebaseConnected
+                          ? 'Stored in Firebase Storage bucket • PNG, JPG, WebP'
+                          : 'PNG, JPG, WebP supported'}
+                      </p>
                       <input
                         ref={fileInputRef}
                         type="file"
                         accept="image/*"
+                        disabled={isUploadingCover}
                         onChange={handleCoverFileUpload}
                         className="hidden"
                       />
@@ -1018,22 +1288,42 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
                 {/* Extra Gallery Photos */}
                 <div className="pt-2 border-t border-slate-200">
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[11px] font-bold text-slate-700">
-                      Multi-Photo Gallery Album ({formGalleryImages.length} photos)
+                    <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
+                      <span>Multi-Photo Gallery Album ({formGalleryImages.length} photos)</span>
+                      {isFirebaseConnected && (
+                        <span className="text-[9px] text-emerald-700 bg-emerald-100/80 px-1.5 py-0.5 rounded font-bold">
+                          Cloud Storage
+                        </span>
+                      )}
                     </span>
                     <button
                       type="button"
+                      disabled={isUploadingGallery}
                       onClick={() => galleryFileInputRef.current?.click()}
-                      className="text-[10px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                      className={`text-[10px] font-bold flex items-center gap-1 px-2 py-0.5 rounded-lg border transition-all ${
+                        isUploadingGallery
+                          ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                          : 'bg-white text-blue-600 hover:text-blue-700 border-blue-200 hover:bg-blue-50'
+                      }`}
                     >
-                      <Plus className="w-3 h-3" />
-                      <span>Upload More Photos</span>
+                      {isUploadingGallery ? (
+                        <>
+                          <Loader2 className="w-3 h-3 animate-spin text-blue-600" />
+                          <span>Uploading...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="w-3 h-3" />
+                          <span>Upload More Photos</span>
+                        </>
+                      )}
                     </button>
                     <input
                       ref={galleryFileInputRef}
                       type="file"
                       accept="image/*"
                       multiple
+                      disabled={isUploadingGallery}
                       onChange={handleGalleryFileUpload}
                       className="hidden"
                     />
@@ -1314,6 +1604,289 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
                 className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-5 py-2 rounded-xl"
               >
                 Close Report
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= FIREBASE STORAGE CONFIGURATION MODAL ================= */}
+      {isFirebaseModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+          <div className="bg-white rounded-3xl w-full max-w-xl shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[92vh] flex flex-col animate-in zoom-in-95">
+            {/* Modal Top Banner */}
+            <div className="bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 text-white p-5 shrink-0 relative">
+              <button
+                type="button"
+                onClick={() => setIsFirebaseModalOpen(false)}
+                className="absolute top-4 right-4 p-2 rounded-2xl bg-white/20 hover:bg-white/30 text-white transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 text-white text-[11px] font-bold uppercase mb-2">
+                <Cloud className="w-3.5 h-3.5" />
+                <span>External Firebase Integration</span>
+              </div>
+              <h3 className="text-xl font-black">Connect Firebase From Another Account</h3>
+              <p className="text-xs text-amber-100 mt-1 leading-relaxed">
+                Connect your existing Google Firebase project to upload event photos and albums directly to your Cloud Storage bucket.
+              </p>
+            </div>
+
+            {/* Current Status Pill */}
+            <div className="px-6 pt-4 pb-2 border-b border-slate-100 flex items-center justify-between bg-slate-50/70 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-slate-700">Storage Status:</span>
+                {isFirebaseConnected ? (
+                  <span className="inline-flex items-center gap-1.5 text-emerald-700 bg-emerald-100/90 font-bold px-2.5 py-1 rounded-full text-[11px]">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span>Connected to project: <strong>{fbProjectId}</strong></span>
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 text-amber-800 bg-amber-100/80 font-bold px-2.5 py-1 rounded-full text-[11px]">
+                    <span>Local Mode (Photos saved in browser)</span>
+                  </span>
+                )}
+              </div>
+              {isFirebaseConnected && (
+                <button
+                  type="button"
+                  onClick={handleDisconnectFirebase}
+                  className="text-[11px] text-red-600 hover:text-red-700 font-bold hover:underline"
+                >
+                  Disconnect
+                </button>
+              )}
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto space-y-4">
+              {/* Feedback messages */}
+              {fbStatusMessage && (
+                <div
+                  className={`p-3.5 rounded-2xl text-xs flex items-start gap-2.5 border ${
+                    fbStatusMessage.type === 'success'
+                      ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                      : 'bg-red-50 border-red-200 text-red-800'
+                  }`}
+                >
+                  {fbStatusMessage.type === 'success' ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                  )}
+                  <span className="leading-relaxed font-medium">{fbStatusMessage.text}</span>
+                </div>
+              )}
+
+              {/* Tab Selector */}
+              <div className="flex rounded-xl bg-slate-100 p-1 text-xs font-bold">
+                <button
+                  type="button"
+                  onClick={() => setFbModalTab('paste')}
+                  className={`flex-1 py-2 rounded-lg transition-all ${
+                    fbModalTab === 'paste' ? 'bg-white text-amber-700 shadow-2xs font-black' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Paste Config Snippet
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFbModalTab('fields')}
+                  className={`flex-1 py-2 rounded-lg transition-all ${
+                    fbModalTab === 'fields' ? 'bg-white text-amber-700 shadow-2xs font-black' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Manual Form
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFbModalTab('guide')}
+                  className={`flex-1 py-2 rounded-lg transition-all ${
+                    fbModalTab === 'guide' ? 'bg-white text-amber-700 shadow-2xs font-black' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Step-by-Step Guide
+                </button>
+              </div>
+
+              {/* TAB 1: Paste Snippet */}
+              {fbModalTab === 'paste' && (
+                <form onSubmit={handleSaveFirebaseConfig} className="space-y-3">
+                  <div>
+                    <label className="text-xs font-bold text-slate-800 block mb-1">
+                      Paste Firebase Config Object or JSON
+                    </label>
+                    <p className="text-[11px] text-slate-500 mb-2 leading-relaxed">
+                      Copy the snippet from your other account&apos;s Firebase Console (Settings &gt; General &gt; Your apps &gt; Web app config) and paste it below:
+                    </p>
+                    <textarea
+                      rows={7}
+                      value={fbJsonInput}
+                      onChange={(e) => setFbJsonInput(e.target.value)}
+                      placeholder={`const firebaseConfig = {\n  apiKey: "AIzaSy...",\n  authDomain: "my-school-events.firebaseapp.com",\n  projectId: "my-school-events",\n  storageBucket: "my-school-events.firebasestorage.app",\n  messagingSenderId: "...",\n  appId: "..."\n};`}
+                      className="w-full font-mono text-xs bg-slate-900 text-emerald-400 rounded-xl p-3 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 hover:scale-[1.01]"
+                  >
+                    <Cloud className="w-4 h-4" />
+                    <span>Connect & Save Firebase Project</span>
+                  </button>
+                </form>
+              )}
+
+              {/* TAB 2: Manual Fields */}
+              {fbModalTab === 'fields' && (
+                <form onSubmit={handleSaveFirebaseConfig} className="space-y-3">
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 block mb-1">
+                      API Key (apiKey) <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={fbApiKey}
+                      onChange={(e) => setFbApiKey(e.target.value)}
+                      placeholder="AIzaSy..."
+                      className="w-full text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-bold text-slate-700 block mb-1">
+                        Project ID (projectId) <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={fbProjectId}
+                        onChange={(e) => setFbProjectId(e.target.value)}
+                        placeholder="e.g. my-school-events"
+                        className="w-full text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold text-slate-700 block mb-1">
+                        Storage Bucket (storageBucket)
+                      </label>
+                      <input
+                        type="text"
+                        value={fbStorageBucket}
+                        onChange={(e) => setFbStorageBucket(e.target.value)}
+                        placeholder="e.g. my-school.firebasestorage.app"
+                        className="w-full text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-bold text-slate-700 block mb-1">
+                        Auth Domain (optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={fbAuthDomain}
+                        onChange={(e) => setFbAuthDomain(e.target.value)}
+                        placeholder="my-school.firebaseapp.com"
+                        className="w-full text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold text-slate-700 block mb-1">
+                        App ID (appId - optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={fbAppId}
+                        onChange={(e) => setFbAppId(e.target.value)}
+                        placeholder="1:123456789:web:..."
+                        className="w-full text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full mt-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 hover:scale-[1.01]"
+                  >
+                    <Cloud className="w-4 h-4" />
+                    <span>Save Firebase Configuration</span>
+                  </button>
+                </form>
+              )}
+
+              {/* TAB 3: Guide */}
+              {fbModalTab === 'guide' && (
+                <div className="space-y-4 text-xs text-slate-700">
+                  <div className="p-3.5 bg-amber-50/60 rounded-2xl border border-amber-200/80 space-y-2">
+                    <h4 className="font-bold text-amber-900 flex items-center gap-1.5">
+                      <ExternalLink className="w-4 h-4 text-amber-600" />
+                      <span>How to find your Firebase Config in your other account:</span>
+                    </h4>
+                    <ol className="list-decimal pl-5 space-y-1.5 text-slate-800">
+                      <li>
+                        Log in to <a href="https://console.firebase.google.com" target="_blank" rel="noreferrer" className="text-blue-600 underline font-semibold">Firebase Console</a> using your other account.
+                      </li>
+                      <li>
+                        Select your project (or click <strong>Add project</strong> if creating a new one).
+                      </li>
+                      <li>
+                        Click the <strong>Project Settings (gear icon)</strong> at top left &gt; <strong>General</strong> tab.
+                      </li>
+                      <li>
+                        Scroll down to <strong>Your apps</strong>. If you haven&apos;t added a web app yet, click the Web icon <code>&lt;/&gt;</code>, give it an app nickname, and click <strong>Register app</strong>.
+                      </li>
+                      <li>
+                        Copy the <code>firebaseConfig</code> code snippet and paste it into the <strong>Paste Config Snippet</strong> tab here!
+                      </li>
+                    </ol>
+                  </div>
+
+                  <div className="p-3.5 bg-blue-50/60 rounded-2xl border border-blue-200/80 space-y-2">
+                    <h4 className="font-bold text-blue-900 flex items-center gap-1.5">
+                      <Database className="w-4 h-4 text-blue-600" />
+                      <span>Firebase Storage Bucket Setup Note:</span>
+                    </h4>
+                    <p className="leading-relaxed text-slate-700">
+                      In the Firebase Console sidebar, navigate to <strong>Build &gt; Storage</strong> and click <strong>Get Started</strong>.
+                    </p>
+                    <p className="leading-relaxed text-slate-700">
+                      In the <strong>Rules</strong> tab of Firebase Storage, ensure uploads are allowed:
+                    </p>
+                    <pre className="bg-slate-900 text-emerald-400 p-2.5 rounded-xl font-mono text-[11px] overflow-x-auto">
+{`rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if true;
+    }
+  }
+}`}
+                    </pre>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Bottom Footer */}
+            <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between shrink-0">
+              <span className="text-[11px] text-slate-400">
+                Credentials saved securely in your browser session.
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsFirebaseModalOpen(false)}
+                className="bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs px-5 py-2 rounded-xl"
+              >
+                Done / Close
               </button>
             </div>
           </div>
