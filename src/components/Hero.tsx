@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Compass,
   Sparkles,
@@ -15,9 +15,19 @@ import {
   CheckCircle,
   Monitor,
   Award,
+  Camera,
+  Edit3,
 } from 'lucide-react';
 import { SCHOOL_INFO } from '../data/schoolData';
-import { getStoredEvents } from '../utils/eventStorage';
+import {
+  getStoredEvents,
+  getActiveStaffUser,
+  setStaffUserSession,
+  StaffUser,
+} from '../utils/eventStorage';
+import { EditSimulatorModal } from './EditSimulatorModal';
+import { StaffLoginModal } from './StaffLoginModal';
+import { getCustomSimulatorImages } from '../utils/simulatorStorage';
 
 interface HeroProps {
   onOpenApplyModal: () => void;
@@ -35,6 +45,43 @@ type CampusHotspot =
 
 export const Hero: React.FC<HeroProps> = ({ onOpenApplyModal, onOpenProspectusModal }) => {
   const [activeHotspot, setActiveHotspot] = useState<CampusHotspot>('robotics');
+  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+  const [isStaffLoginOpen, setIsStaffLoginOpen] = useState<boolean>(false);
+  const [activeStaff, setActiveStaff] = useState<StaffUser | null>(() => getActiveStaffUser());
+  const [customImages, setCustomImages] = useState<Record<string, string>>(() =>
+    getCustomSimulatorImages()
+  );
+
+  useEffect(() => {
+    const handleUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent<Record<string, string>>;
+      if (customEvent.detail) {
+        setCustomImages(customEvent.detail);
+      } else {
+        setCustomImages(getCustomSimulatorImages());
+      }
+    };
+
+    const handleAuth = (e: Event) => {
+      const customEvent = e as CustomEvent<StaffUser | null>;
+      setActiveStaff(customEvent.detail !== undefined ? customEvent.detail : getActiveStaffUser());
+    };
+
+    window.addEventListener('simulator_images_updated', handleUpdate);
+    window.addEventListener('nagarjuna_staff_auth_changed', handleAuth);
+    return () => {
+      window.removeEventListener('simulator_images_updated', handleUpdate);
+      window.removeEventListener('nagarjuna_staff_auth_changed', handleAuth);
+    };
+  }, []);
+
+  const handleOpenEditFlow = () => {
+    if (activeStaff) {
+      setIsEditModalOpen(true);
+    } else {
+      setIsStaffLoginOpen(true);
+    }
+  };
 
   const storedEvents = getStoredEvents();
   const latestEvent = storedEvents[0];
@@ -49,7 +96,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenApplyModal, onOpenProspectusMo
       badge: 'STEM & AI',
       title: 'Advanced Robotics & AI Center',
       desc: 'Arduino, LEGO Mindstorms, 3D printing, Python programming, and autonomous drone kits.',
-      image: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?q=80&w=1200&auto=format&fit=crop',
+      image: customImages['robotics'] || 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?q=80&w=1200&auto=format&fit=crop',
     },
     {
       id: 'building' as CampusHotspot,
@@ -59,7 +106,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenApplyModal, onOpenProspectusMo
       badge: 'Eco-Friendly',
       title: 'Nagarjuna Green Campus',
       desc: '15-acre sprawling Wi-Fi campus with solar architecture and climate-controlled academic facilities in Kandukur.',
-      image: 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?q=80&w=1200&auto=format&fit=crop',
+      image: customImages['building'] || 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?q=80&w=1200&auto=format&fit=crop',
     },
     {
       id: 'smart_classroom' as CampusHotspot,
@@ -69,7 +116,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenApplyModal, onOpenProspectusMo
       badge: '4K Interactive',
       title: 'Digital Smart Classrooms',
       desc: 'Interactive 4K flat panels, ergonomic digital stations, and immersive visual curriculum modules.',
-      image: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=1200&auto=format&fit=crop',
+      image: customImages['smart_classroom'] || 'https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=1200&auto=format&fit=crop',
     },
     {
       id: 'computer' as CampusHotspot,
@@ -79,7 +126,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenApplyModal, onOpenProspectusMo
       badge: 'High-Tech',
       title: 'Digital Computer Labs',
       desc: 'High-speed gigabit workstations, cloud coding environments, and cyber safety training.',
-      image: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=1200&auto=format&fit=crop',
+      image: customImages['computer'] || 'https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=1200&auto=format&fit=crop',
     },
     {
       id: 'playground' as CampusHotspot,
@@ -89,7 +136,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenApplyModal, onOpenProspectusMo
       badge: 'Olympic Turf',
       title: 'Multi-Sport Complex',
       desc: 'Football synthetic pitch, floodlit basketball courts, cricket nets, and running track.',
-      image: 'https://images.unsplash.com/photo-1526232761682-d26e03ac148e?q=80&w=1200&auto=format&fit=crop',
+      image: customImages['playground'] || 'https://images.unsplash.com/photo-1526232761682-d26e03ac148e?q=80&w=1200&auto=format&fit=crop',
     },
     {
       id: 'auditorium' as CampusHotspot,
@@ -99,7 +146,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenApplyModal, onOpenProspectusMo
       badge: 'Acoustic Hall',
       title: '1,200-Seat Grand Auditorium',
       desc: 'Acoustically engineered amphitheater for student theatre, annual day galas, and guest lectures.',
-      image: 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?q=80&w=1200&auto=format&fit=crop',
+      image: customImages['auditorium'] || 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?q=80&w=1200&auto=format&fit=crop',
     },
     {
       id: 'events' as CampusHotspot,
@@ -109,7 +156,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenApplyModal, onOpenProspectusMo
       badge: 'Live Events',
       title: latestEvent ? latestEvent.title : 'Annual Day & Cultural Celebrations',
       desc: latestEvent ? latestEvent.description : 'National festivities, Independence Day parade, sports meet, and vibrant cultural showcases.',
-      image: eventDisplayImage,
+      image: customImages['events'] || eventDisplayImage,
     },
   ];
 
@@ -179,13 +226,51 @@ export const Hero: React.FC<HeroProps> = ({ onOpenApplyModal, onOpenProspectusMo
                 <Sparkles className="w-6 h-6 text-white" />
               </div>
 
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xs font-bold text-blue-600 uppercase tracking-wider">
-                  INTERACTIVE CAMPUS SIMULATOR
-                </h3>
-                <span className="text-[10px] bg-blue-50 text-blue-600 px-2.5 py-1 rounded-full border border-blue-100 font-bold">
-                  LIVE VISUAL
-                </span>
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xs font-bold text-blue-600 uppercase tracking-wider">
+                    INTERACTIVE CAMPUS SIMULATOR
+                  </h3>
+                  <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full border border-blue-100 font-bold">
+                    LIVE VISUAL
+                  </span>
+                </div>
+
+                {/* Staff Status & Edit Photo Action */}
+                <div className="flex items-center gap-2">
+                  {activeStaff ? (
+                    <div className="flex items-center gap-1.5">
+                      <div className="hidden sm:flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 px-2.5 py-1 rounded-xl text-[11px] font-bold">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="truncate max-w-[120px]">Staff: {activeStaff.name}</span>
+                      </div>
+                      <button
+                        onClick={handleOpenEditFlow}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold shadow-md transition-all hover:scale-105 cursor-pointer"
+                        title="Edit or upload custom pictures for the simulator"
+                      >
+                        <Camera className="w-3.5 h-3.5 text-amber-300" />
+                        <span>Edit Photos</span>
+                      </button>
+                      <button
+                        onClick={() => setStaffUserSession(null)}
+                        className="text-[10px] text-slate-400 hover:text-rose-600 px-1.5 py-1 font-semibold transition-colors"
+                        title="Sign out of staff mode"
+                      >
+                        Sign Out
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={handleOpenEditFlow}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-blue-600 text-white text-[11px] font-bold shadow-md transition-all hover:scale-105 cursor-pointer"
+                      title="Sign in as staff to edit campus simulator photos"
+                    >
+                      <ShieldCheck className="w-3.5 h-3.5 text-amber-300" />
+                      <span>Staff Login to Edit</span>
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Hotspot Category Buttons Bar */}
@@ -224,6 +309,16 @@ export const Hero: React.FC<HeroProps> = ({ onOpenApplyModal, onOpenProspectusMo
                   <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                   <span>{currentHotspotData.badge}</span>
                 </div>
+
+                {/* Top Right Edit Button directly on active photo */}
+                <button
+                  onClick={handleOpenEditFlow}
+                  className="absolute top-3 right-3 bg-slate-900/85 hover:bg-slate-900 text-white backdrop-blur-md px-3 py-1.5 rounded-full border border-white/30 flex items-center gap-1.5 text-xs font-bold shadow-md hover:scale-105 transition-all z-10 cursor-pointer"
+                  title={activeStaff ? `Change photo for ${currentHotspotData.label}` : 'Staff login to change photo'}
+                >
+                  <Edit3 className="w-3.5 h-3.5 text-amber-400" />
+                  <span>{activeStaff ? 'Change Photo' : 'Staff: Edit Photo'}</span>
+                </button>
 
                 {/* Bottom Overlay Content */}
                 <div className="absolute bottom-3 left-3 right-3 bg-slate-900/80 backdrop-blur-md p-4 rounded-2xl border border-white/20 text-white">
@@ -275,6 +370,26 @@ export const Hero: React.FC<HeroProps> = ({ onOpenApplyModal, onOpenProspectusMo
           </div>
         </div>
       </div>
+
+      {/* Staff Login Modal */}
+      <StaffLoginModal
+        isOpen={isStaffLoginOpen}
+        onClose={() => setIsStaffLoginOpen(false)}
+        title="Staff Login to Edit Simulator Photos"
+        subtitle="Sign in with official Nagarjuna staff credentials (satff@nagarjuna.school / staff@2026) to edit campus simulator pictures and upload school photos."
+        onSuccess={(user) => {
+          setActiveStaff(user);
+          setIsEditModalOpen(true);
+        }}
+      />
+
+      {/* Edit Simulator Modal */}
+      <EditSimulatorModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        initialHotspotId={activeHotspot}
+        onImageChange={() => setCustomImages(getCustomSimulatorImages())}
+      />
     </section>
   );
 };

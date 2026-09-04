@@ -168,7 +168,38 @@ export const setStaffUserSession = (user: StaffUser | null): void => {
     } else {
       localStorage.removeItem(AUTH_KEY);
     }
+    window.dispatchEvent(new CustomEvent('nagarjuna_staff_auth_changed', { detail: user }));
   } catch (err) {
     console.error('Error saving staff auth:', err);
   }
 };
+
+export const validateStaffCredentials = (
+  emailInput: string,
+  passInput: string
+): { success: boolean; user?: StaffUser; error?: string } => {
+  const email = emailInput.trim().toLowerCase();
+  const pass = passInput.trim();
+
+  if (!email) {
+    return { success: false, error: 'Please enter the staff email (satff@nagarjuna.school).' };
+  }
+  if (!pass) {
+    return { success: false, error: 'Please enter the staff password (staff@2026).' };
+  }
+
+  const isEmailMatch =
+    email === STAFF_CREDENTIALS.email.toLowerCase() ||
+    email === STAFF_CREDENTIALS.altEmail.toLowerCase();
+  const isPasswordMatch = pass === STAFF_CREDENTIALS.password;
+
+  if (!isEmailMatch || !isPasswordMatch) {
+    return {
+      success: false,
+      error: 'Invalid credentials! Please use satff@nagarjuna.school and password staff@2026.',
+    };
+  }
+
+  return { success: true, user: PRIMARY_STAFF_ACCOUNT };
+};
+

@@ -133,6 +133,13 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
       setFbAuthDomain(cfg.authDomain || '');
       setFbAppId(cfg.appId || '');
     }
+
+    const handleAuth = (e: Event) => {
+      const customEvent = e as CustomEvent<StaffUser | null>;
+      setActiveStaff(customEvent.detail !== undefined ? customEvent.detail : getActiveStaffUser());
+    };
+    window.addEventListener('nagarjuna_staff_auth_changed', handleAuth);
+    return () => window.removeEventListener('nagarjuna_staff_auth_changed', handleAuth);
   }, [refreshTrigger]);
 
   const categories = [
