@@ -9,7 +9,7 @@ export const WhatsAppButton: React.FC = () => {
       target="_blank"
       rel="noopener noreferrer"
       title="Chat on WhatsApp for School Details & Admissions"
-      className="fixed bottom-6 left-6 z-40 bg-emerald-600 hover:bg-emerald-700 text-white p-3.5 sm:px-5 sm:py-3.5 rounded-full shadow-xl shadow-emerald-500/20 flex items-center gap-2 font-bold text-xs hover:scale-105 transition-all backdrop-blur-md border border-white/40"
+      className="fixed bottom-4 left-4 z-40 bg-emerald-600 hover:bg-emerald-700 text-white p-3.5 sm:px-5 sm:py-3.5 rounded-full shadow-xl shadow-emerald-500/20 flex items-center gap-2 font-bold text-xs hover:scale-105 transition-all backdrop-blur-md border border-white/40"
     >
       <MessageCircle className="w-5 h-5 text-white" />
       <span className="hidden sm:inline">WhatsApp Helpdesk</span>

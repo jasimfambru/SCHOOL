@@ -85,7 +85,7 @@ export const AIChatAssistant: React.FC = () => {
       {/* Floating Trigger Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-6 right-6 z-40 flex items-center gap-2.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 hover:from-blue-500 hover:to-sky-400 text-white p-3.5 sm:px-5 sm:py-3.5 rounded-full shadow-2xl shadow-blue-500/40 hover:scale-105 transition-all ${
+        className={`fixed bottom-4 right-4 z-40 flex items-center gap-2.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 hover:from-blue-500 hover:to-sky-400 text-white p-3.5 sm:px-5 sm:py-3.5 rounded-full shadow-2xl shadow-blue-500/40 hover:scale-105 transition-all ${
           isOpen ? 'hidden' : 'flex animate-bounce-slow'
         }`}
       >

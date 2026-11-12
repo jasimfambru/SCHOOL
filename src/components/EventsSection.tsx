@@ -754,7 +754,7 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
                       {evt.date}
                     </span>
                     <span>•</span>
-                    <span className="flex items-center gap-1 truncate max-w-[160px]">
+                    <span className="flex items-center gap-1 min-w-0 flex-1">
                       <MapPin className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                       {evt.location}
                     </span>
@@ -793,7 +793,7 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
 
               {/* Card Footer */}
               <div className="px-5 sm:px-6 pb-5 pt-2 flex items-center justify-between border-t border-slate-100 text-xs">
-                <span className="text-[11px] text-slate-400 font-medium truncate max-w-[140px]">
+                <span className="text-[11px] text-slate-400 font-medium line-clamp-2 max-w-[60%]">
                   By: {evt.staffInCharge || 'Nagarjuna Faculty'}
                 </span>
 
@@ -814,7 +814,7 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
                     }}
                     className="text-blue-600 font-bold hover:text-blue-700 flex items-center gap-1 group-hover:translate-x-1 transition-transform"
                   >
-                    <span>Read Matter</span>
+                    <span>Read More</span>
                     <ChevronRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
