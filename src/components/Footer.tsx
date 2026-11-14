@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  GraduationCap,
   Phone,
   MapPin,
   Send,
@@ -27,9 +26,7 @@ export const Footer: React.FC<FooterProps> = ({
           {/* Col 1: Brand Info */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/20 font-bold">
-                <GraduationCap className="w-5 h-5" />
-              </div>
+              <img src="/logo.png" alt="Nagarjuna Public School logo" className="w-14 h-14 object-contain" />
               <div>
                 <span className="font-black text-xl text-slate-900 tracking-tight">
                   NAGARJUNA SCHOOL
