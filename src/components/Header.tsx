@@ -242,7 +242,7 @@ export const Header: React.FC<HeaderProps> = ({
         isOpen={isStaffLoginOpen}
         onClose={() => setIsStaffLoginOpen(false)}
         title="Staff Portal Authentication"
-        subtitle="Sign in with official Nagarjuna staff credentials (satff@nagarjuna.school / staff@2026) to manage campus simulator photos and publish events."
+        subtitle="Sign in with your school staff account to manage campus simulator photos and publish events."
         onSuccess={(user) => {
           setActiveStaff(user);
         }}

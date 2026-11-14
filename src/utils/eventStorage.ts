@@ -1,8 +1,20 @@
 import { EventItem } from '../types';
 import { EVENTS } from '../data/schoolData';
+import {
+  isFirebaseConfigured,
+  signInWithFirebase,
+  signOutFirebase,
+  onFirebaseAuthChanged,
+  fetchStaffProfile,
+  subscribeToEventsCollection,
+  saveEventDoc,
+  deleteEventDoc,
+  seedEventsIfEmpty,
+  replaceAllEventDocs,
+} from './firebase';
 
 const STORAGE_KEY = 'nagarjuna_school_events_v2';
-const AUTH_KEY = 'nagarjuna_staff_auth';
+const SHARED_CACHE_KEY = 'nagarjuna_shared_events_cache_v1';
 
 export interface StaffUser {
   id: string;
@@ -12,23 +24,6 @@ export interface StaffUser {
   avatar: string;
   token: string;
 }
-
-export const STAFF_CREDENTIALS = {
-  email: 'staff@nagarjuna.school',
-  altEmail: 'satff@nagarjuna.school',
-  password: 'staff@2026',
-};
-
-export const PRIMARY_STAFF_ACCOUNT: StaffUser = {
-  id: 'staff@nagarjuna.school',
-  name: 'Faculty Coordinator',
-  department: 'Academic & Events Committee',
-  role: 'Staff Coordinator & Editor',
-  avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop',
-  token: 'token-staff-2026',
-};
-
-export const DEMO_STAFF_ACCOUNTS: StaffUser[] = [PRIMARY_STAFF_ACCOUNT];
 
 export const PRESET_EVENT_IMAGES = [
   {
@@ -78,8 +73,102 @@ export const PRESET_EVENT_IMAGES = [
   },
 ];
 
-// Load all events from local storage or fallback to initial defaults
-export const getStoredEvents = (): EventItem[] => {
+// ---------------------------------------------------------------------------
+// Events
+//
+// When Firebase is configured, events live in the Firestore "events"
+// collection and every visitor sees the same list. Only signed-in staff can
+// change it (enforced by firestore.rules, not just by this UI). Until the
+// first snapshot arrives we show the last cached copy, or the starter events.
+//
+// Without Firebase the site falls back to this browser's localStorage.
+// ---------------------------------------------------------------------------
+
+const EVENTS_CHANGED = 'nagarjuna_events_changed';
+const EVENTS_SYNC_ERROR = 'nagarjuna_events_sync_error';
+
+let sharedEvents: EventItem[] | null = (() => {
+  try {
+    const raw = localStorage.getItem(SHARED_CACHE_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : null;
+  } catch {
+    return null;
+  }
+})();
+
+const sortNewestFirst = (list: EventItem[]): EventItem[] =>
+  [...list].sort((a, b) => (b.publishedAt || '').localeCompare(a.publishedAt || ''));
+
+const setSharedEvents = (list: EventItem[]): void => {
+  sharedEvents = list;
+  try {
+    localStorage.setItem(SHARED_CACHE_KEY, JSON.stringify(list));
+  } catch {
+    // Cache is only a convenience; ignore quota errors.
+  }
+  window.dispatchEvent(new CustomEvent(EVENTS_CHANGED));
+};
+
+const reportSyncError = (err: unknown): void => {
+  const message = err instanceof Error ? err.message : String(err);
+  console.error('Shared events error:', err);
+  window.dispatchEvent(new CustomEvent(EVENTS_SYNC_ERROR, { detail: message }));
+};
+
+// Runs a Firestore write in the background; failures are reported to the UI.
+const persist = (work: Promise<unknown>): void => {
+  work.catch(reportSyncError);
+};
+
+export const onEventsChanged = (handler: () => void): (() => void) => {
+  window.addEventListener(EVENTS_CHANGED, handler);
+  return () => window.removeEventListener(EVENTS_CHANGED, handler);
+};
+
+export const onEventsSyncError = (handler: (message: string) => void): (() => void) => {
+  const listener = (e: Event) => handler(String((e as CustomEvent<string>).detail));
+  window.addEventListener(EVENTS_SYNC_ERROR, listener);
+  return () => window.removeEventListener(EVENTS_SYNC_ERROR, listener);
+};
+
+let syncStarted = false;
+
+/** Starts the live link to Firebase (events + staff sign-in). Safe to call more than once. */
+export const startFirebaseSync = (): void => {
+  if (syncStarted || !isFirebaseConfigured()) return;
+  syncStarted = true;
+
+  subscribeToEventsCollection(
+    (events) => {
+      // An empty collection means "not seeded yet": keep showing the starter events.
+      if (events.length > 0) setSharedEvents(sortNewestFirst(events));
+    },
+    reportSyncError
+  );
+
+  onFirebaseAuthChanged(async (user) => {
+    if (!user) {
+      setActiveStaff(null);
+      return;
+    }
+    try {
+      const profile = await fetchStaffProfile(user.uid);
+      if (!profile) {
+        // Signed in, but not on the staff list: treat as a visitor.
+        await signOutFirebase();
+        setActiveStaff(null);
+        return;
+      }
+      setActiveStaff(buildStaffUser(user.uid, user.email, profile));
+      await seedEventsIfEmpty(EVENTS);
+    } catch (err) {
+      reportSyncError(err);
+    }
+  });
+};
+
+const readLocalEvents = (): EventItem[] => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
@@ -87,17 +176,21 @@ export const getStoredEvents = (): EventItem[] => {
       return EVENTS;
     }
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      return parsed;
-    }
-    return EVENTS;
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : EVENTS;
   } catch (err) {
     console.error('Error reading events from localStorage:', err);
     return EVENTS;
   }
 };
 
-// Save events array to localStorage
+export const getStoredEvents = (): EventItem[] => {
+  if (isFirebaseConfigured()) {
+    startFirebaseSync();
+    return sharedEvents && sharedEvents.length > 0 ? sharedEvents : EVENTS;
+  }
+  return readLocalEvents();
+};
+
 export const saveStoredEvents = (events: EventItem[]): void => {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
@@ -106,100 +199,163 @@ export const saveStoredEvents = (events: EventItem[]): void => {
   }
 };
 
-// Add a new event
 export const addStoredEvent = (event: Omit<EventItem, 'id'>): EventItem => {
-  const currentEvents = getStoredEvents();
   const newEvent: EventItem = {
     ...event,
-    id: `evt-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+    id: `evt-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     publishedAt: new Date().toISOString(),
     isPublished: true,
   };
-  const updated = [newEvent, ...currentEvents];
-  saveStoredEvents(updated);
+  if (isFirebaseConfigured()) {
+    setSharedEvents(sortNewestFirst([newEvent, ...getStoredEvents()]));
+    persist(saveEventDoc(newEvent));
+  } else {
+    saveStoredEvents([newEvent, ...getStoredEvents()]);
+  }
   return newEvent;
 };
 
-// Update an existing event
 export const updateStoredEvent = (id: string, updates: Partial<EventItem>): EventItem | null => {
-  const currentEvents = getStoredEvents();
-  const index = currentEvents.findIndex((e) => e.id === id);
+  const current = getStoredEvents();
+  const index = current.findIndex((e) => e.id === id);
   if (index === -1) return null;
 
-  const updatedItem: EventItem = {
-    ...currentEvents[index],
-    ...updates,
-  };
-  currentEvents[index] = updatedItem;
-  saveStoredEvents(currentEvents);
-  return updatedItem;
+  const updated: EventItem = { ...current[index], ...updates, id };
+  const next = [...current];
+  next[index] = updated;
+
+  if (isFirebaseConfigured()) {
+    setSharedEvents(sortNewestFirst(next));
+    persist(saveEventDoc(updated));
+  } else {
+    saveStoredEvents(next);
+  }
+  return updated;
 };
 
-// Delete an event
 export const deleteStoredEvent = (id: string): boolean => {
-  const currentEvents = getStoredEvents();
-  const filtered = currentEvents.filter((e) => e.id !== id);
-  if (filtered.length === currentEvents.length) return false;
-  saveStoredEvents(filtered);
+  const current = getStoredEvents();
+  const filtered = current.filter((e) => e.id !== id);
+  if (filtered.length === current.length) return false;
+
+  if (isFirebaseConfigured()) {
+    setSharedEvents(filtered);
+    persist(deleteEventDoc(id));
+  } else {
+    saveStoredEvents(filtered);
+  }
   return true;
 };
 
-// Reset events to default
-export const resetStoredEvents = (): EventItem[] => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(EVENTS));
+export const resetStoredEvents = async (): Promise<EventItem[]> => {
+  if (isFirebaseConfigured()) {
+    await replaceAllEventDocs(EVENTS);
+    setSharedEvents(sortNewestFirst(EVENTS));
+  } else {
+    saveStoredEvents(EVENTS);
+  }
   return EVENTS;
 };
 
-// Staff authentication helpers
+// ---------------------------------------------------------------------------
+// Staff authentication (Firebase Authentication + staff/{uid} allow-list)
+//
+// There are no passwords in this code. Staff accounts are created by an
+// administrator in the Firebase console; see STAFF_SETUP.md.
+// ---------------------------------------------------------------------------
+
+const AUTH_CHANGED = 'nagarjuna_staff_auth_changed';
+
+let activeStaff: StaffUser | null = null;
+
+const initialAvatar = (name: string): string => {
+  const letter = (name.trim()[0] || 'S').toUpperCase().replace(/[<>&"']/g, 'S');
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96"><rect width="96" height="96" fill="#2563eb"/>` +
+    `<text x="48" y="62" font-size="44" font-family="Arial" font-weight="bold" fill="white" text-anchor="middle">${letter}</text></svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+};
+
+const buildStaffUser = (
+  uid: string,
+  email: string | null,
+  profile: { name?: string; role?: string; department?: string }
+): StaffUser => {
+  const name = profile.name || email || 'Staff';
+  return {
+    id: uid,
+    name,
+    department: profile.department || 'School Staff',
+    role: profile.role || 'Staff',
+    avatar: initialAvatar(name),
+    token: '',
+  };
+};
+
+const setActiveStaff = (user: StaffUser | null): void => {
+  activeStaff = user;
+  window.dispatchEvent(new CustomEvent(AUTH_CHANGED, { detail: user }));
+};
+
 export const getActiveStaffUser = (): StaffUser | null => {
-  try {
-    const raw = localStorage.getItem(AUTH_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
+  if (isFirebaseConfigured()) startFirebaseSync();
+  return activeStaff;
 };
 
+/** Pass null to sign out. Signing in goes through signInStaff(). */
 export const setStaffUserSession = (user: StaffUser | null): void => {
-  try {
-    if (user) {
-      localStorage.setItem(AUTH_KEY, JSON.stringify(user));
-    } else {
-      localStorage.removeItem(AUTH_KEY);
-    }
-    window.dispatchEvent(new CustomEvent('nagarjuna_staff_auth_changed', { detail: user }));
-  } catch (err) {
-    console.error('Error saving staff auth:', err);
+  if (user === null) {
+    setActiveStaff(null);
+    signOutFirebase().catch(reportSyncError);
   }
 };
 
-export const validateStaffCredentials = (
+export const signInStaff = async (
   emailInput: string,
-  passInput: string
-): { success: boolean; user?: StaffUser; error?: string } => {
-  const email = emailInput.trim().toLowerCase();
-  const pass = passInput.trim();
-
-  if (!email) {
-    return { success: false, error: 'Please enter the staff email (satff@nagarjuna.school).' };
+  passwordInput: string
+): Promise<{ success: boolean; user?: StaffUser; error?: string }> => {
+  const email = emailInput.trim();
+  if (!email || !passwordInput) {
+    return { success: false, error: 'Please enter your staff email and password.' };
   }
-  if (!pass) {
-    return { success: false, error: 'Please enter the staff password (staff@2026).' };
-  }
-
-  const isEmailMatch =
-    email === STAFF_CREDENTIALS.email.toLowerCase() ||
-    email === STAFF_CREDENTIALS.altEmail.toLowerCase();
-  const isPasswordMatch = pass === STAFF_CREDENTIALS.password;
-
-  if (!isEmailMatch || !isPasswordMatch) {
+  if (!isFirebaseConfigured()) {
     return {
       success: false,
-      error: 'Invalid credentials! Please use satff@nagarjuna.school and password staff@2026.',
+      error: 'Staff sign-in is not set up yet. The school administrator needs to connect Firebase first.',
     };
   }
+  startFirebaseSync();
 
-  return { success: true, user: PRIMARY_STAFF_ACCOUNT };
+  try {
+    const cred = await signInWithFirebase(email, passwordInput);
+    const profile = await fetchStaffProfile(cred.user.uid);
+    if (!profile) {
+      await signOutFirebase();
+      return {
+        success: false,
+        error: 'This account is not on the school staff list. Ask the administrator to add it.',
+      };
+    }
+    const user = buildStaffUser(cred.user.uid, cred.user.email, profile);
+    setActiveStaff(user);
+    return { success: true, user };
+  } catch (err) {
+    const code = (err as { code?: string })?.code || '';
+    if (
+      code === 'auth/invalid-credential' ||
+      code === 'auth/wrong-password' ||
+      code === 'auth/user-not-found' ||
+      code === 'auth/invalid-email'
+    ) {
+      return { success: false, error: 'Incorrect email or password.' };
+    }
+    if (code === 'auth/too-many-requests') {
+      return { success: false, error: 'Too many attempts. Please wait a few minutes and try again.' };
+    }
+    if (code === 'auth/network-request-failed') {
+      return { success: false, error: 'Network problem. Check your connection and try again.' };
+    }
+    console.error('Staff sign-in error:', err);
+    return { success: false, error: 'Could not sign in. Please try again.' };
+  }
 };
-

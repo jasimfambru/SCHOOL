@@ -1,11 +1,6 @@
 import React, { useState } from 'react';
 import { X, ShieldCheck, Lock, AlertCircle, Sparkles } from 'lucide-react';
-import {
-  STAFF_CREDENTIALS,
-  validateStaffCredentials,
-  setStaffUserSession,
-  StaffUser,
-} from '../utils/eventStorage';
+import { signInStaff, StaffUser } from '../utils/eventStorage';
 
 interface StaffLoginModalProps {
   isOpen: boolean;
@@ -22,32 +17,29 @@ export const StaffLoginModal: React.FC<StaffLoginModalProps> = ({
   title = 'Staff Portal Authentication',
   subtitle = 'Sign in with official Nagarjuna staff credentials to edit campus simulator photos, upload events, and manage campus media.',
 }) => {
-  const [email, setEmail] = useState<string>('satff@nagarjuna.school');
-  const [password, setPassword] = useState<string>('staff@2026');
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
   const [error, setError] = useState<string>('');
+  const [busy, setBusy] = useState<boolean>(false);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = validateStaffCredentials(email, password);
+    setBusy(true);
+    setError('');
+    const result = await signInStaff(email, password);
+    setBusy(false);
     if (!result.success || !result.user) {
-      setError(result.error || 'Invalid staff credentials');
+      setError(result.error || 'Could not sign in.');
       return;
     }
 
-    setStaffUserSession(result.user);
-    setError('');
+    setPassword('');
     if (onSuccess) {
       onSuccess(result.user);
     }
     onClose();
-  };
-
-  const handleQuickFill = () => {
-    setEmail('satff@nagarjuna.school');
-    setPassword('staff@2026');
-    setError('');
   };
 
   return (
@@ -77,42 +69,16 @@ export const StaffLoginModal: React.FC<StaffLoginModalProps> = ({
             </div>
           )}
 
-          {/* Quick Credentials Card */}
-          <div className="bg-blue-50/80 border border-blue-200/80 rounded-2xl p-3.5 text-xs text-slate-700">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold text-blue-900 uppercase tracking-wider flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
-                <span>Authorized Credentials</span>
-              </span>
-              <button
-                type="button"
-                onClick={handleQuickFill}
-                className="text-[11px] font-bold text-blue-700 bg-white hover:bg-blue-600 hover:text-white px-2.5 py-1 rounded-lg border border-blue-200 transition-all shadow-xs"
-              >
-                Auto-Fill
-              </button>
-            </div>
-            <div className="space-y-1 font-mono text-[11px] text-slate-800 bg-white/80 p-2.5 rounded-xl border border-blue-100">
-              <div>
-                <span className="text-slate-500 font-sans font-medium">Email: </span>
-                <strong className="text-blue-900 select-all">satff@nagarjuna.school</strong>
-              </div>
-              <div>
-                <span className="text-slate-500 font-sans font-medium">Password: </span>
-                <strong className="text-blue-900 select-all">staff@2026</strong>
-              </div>
-            </div>
-          </div>
-
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-3.5">
             <div>
               <label className="text-xs font-bold text-slate-700 block mb-1">Staff Email</label>
               <input
                 type="email"
+                autoComplete="username"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="satff@nagarjuna.school"
+                placeholder="your staff email"
                 className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                 required
               />
@@ -123,9 +89,10 @@ export const StaffLoginModal: React.FC<StaffLoginModalProps> = ({
               <div className="relative">
                 <input
                   type="password"
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter staff@2026"
+                  placeholder="Enter your password"
                   className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl pl-3.5 pr-10 py-2.5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                   required
                 />
@@ -143,10 +110,11 @@ export const StaffLoginModal: React.FC<StaffLoginModalProps> = ({
               </button>
               <button
                 type="submit"
-                className="w-2/3 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5"
+                disabled={busy}
+                className="w-2/3 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5"
               >
                 <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                <span>Verify & Sign In</span>
+                <span>{busy ? 'Signing in...' : 'Sign In'}</span>
               </button>
             </div>
           </form>
