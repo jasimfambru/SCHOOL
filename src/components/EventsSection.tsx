@@ -40,8 +40,10 @@ import {
   resetStoredEvents,
   getActiveStaffUser,
   setStaffUserSession,
-  STAFF_CREDENTIALS,
-  PRIMARY_STAFF_ACCOUNT,
+  signInStaff,
+  onEventsChanged,
+  onEventsSyncError,
+  startFirebaseSync,
   PRESET_EVENT_IMAGES,
   StaffUser,
 } from '../utils/eventStorage';
@@ -96,6 +98,7 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
   const galleryFileInputRef = useRef<HTMLInputElement>(null);
 
   // Firebase Cloud Storage Modal & States
+  const [loginBusy, setLoginBusy] = useState(false);
   const [isFirebaseConnected, setIsFirebaseConnected] = useState<boolean>(false);
   const [isFirebaseModalOpen, setIsFirebaseModalOpen] = useState(false);
   const [fbApiKey, setFbApiKey] = useState('');
@@ -142,6 +145,19 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
     return () => window.removeEventListener('nagarjuna_staff_auth_changed', handleAuth);
   }, [refreshTrigger]);
 
+  // Live shared events: refresh when Firebase pushes a change, and report failed saves.
+  useEffect(() => {
+    startFirebaseSync();
+    const stopChanges = onEventsChanged(() => setEvents(getStoredEvents()));
+    const stopErrors = onEventsSyncError((message) =>
+      window.alert(`The shared events database reported a problem: ${message}`)
+    );
+    return () => {
+      stopChanges();
+      stopErrors();
+    };
+  }, []);
+
   const categories = [
     'All',
     'Celebration',
@@ -178,47 +194,29 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
     }
   };
 
-  // Staff Login Handler
-  const handleStaffLogin = (user?: StaffUser) => {
+  // Staff Login Handler (Firebase Authentication)
+  const handleStaffLogin = async (user?: StaffUser) => {
     if (user) {
-      setStaffUserSession(user);
       setActiveStaff(user);
       setIsLoginModalOpen(false);
       setLoginError('');
       return;
     }
 
-    const emailInput = loginStaffId.trim().toLowerCase();
-    const passInput = loginPassword.trim();
+    setLoginBusy(true);
+    setLoginError('');
+    const result = await signInStaff(loginStaffId, loginPassword);
+    setLoginBusy(false);
 
-    if (!emailInput) {
-      setLoginError('Please enter the staff email (satff@nagarjuna.school).');
+    if (!result.success || !result.user) {
+      setLoginError(result.error || 'Could not sign in.');
       return;
     }
 
-    if (!passInput) {
-      setLoginError('Please enter the password (staff@2026).');
-      return;
-    }
-
-    // Verify against single authorized staff credentials
-    const isEmailMatch =
-      emailInput === STAFF_CREDENTIALS.email.toLowerCase() ||
-      emailInput === STAFF_CREDENTIALS.altEmail.toLowerCase();
-    const isPasswordMatch = passInput === STAFF_CREDENTIALS.password;
-
-    if (!isEmailMatch || !isPasswordMatch) {
-      setLoginError('Invalid credentials! Please use satff@nagarjuna.school and password staff@2026.');
-      return;
-    }
-
-    const loggedUser: StaffUser = PRIMARY_STAFF_ACCOUNT;
-    setStaffUserSession(loggedUser);
-    setActiveStaff(loggedUser);
+    setActiveStaff(result.user);
     setIsLoginModalOpen(false);
     setLoginStaffId('');
     setLoginPassword('');
-    setLoginError('');
   };
 
   const handleStaffLogout = () => {
@@ -307,10 +305,14 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
   };
 
   // Reset to Defaults
-  const handleResetDefaults = () => {
-    if (window.confirm('Reset all events to default demo records? Custom added events will be restored.')) {
-      const reset = resetStoredEvents();
-      setEvents(reset);
+  const handleResetDefaults = async () => {
+    if (window.confirm('Reset all events to the original starter events? Events you added will be removed for everyone.')) {
+      try {
+        const reset = await resetStoredEvents();
+        setEvents(reset);
+      } catch (err) {
+        window.alert(`Could not reset events: ${err instanceof Error ? err.message : String(err)}`);
+      }
     }
   };
 
@@ -374,6 +376,7 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
     }
 
     saveCustomFirebaseConfig(parsedConfig);
+    startFirebaseSync();
     setIsFirebaseConnected(true);
     setFbApiKey(parsedConfig.apiKey);
     setFbProjectId(parsedConfig.projectId);
@@ -410,16 +413,9 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
         setUploadStatusBanner({ text: 'Cover photo successfully stored in your Firebase Cloud Storage!', type: 'success' });
         setTimeout(() => setUploadStatusBanner(null), 4000);
       } catch (err: any) {
-        console.warn('Firebase Storage upload error, falling back to local file:', err);
-        const reader = new FileReader();
-        reader.onload = () => {
-          if (typeof reader.result === 'string') {
-            setFormImage(reader.result);
-          }
-        };
-        reader.readAsDataURL(file);
+        console.error('Firebase Storage upload error:', err);
         setUploadStatusBanner({
-          text: `Saved locally. Note: Firebase Storage upload error (${err?.message || 'Check Storage Rules in Firebase Console'}).`,
+          text: `Photo could not be uploaded (${err?.message || 'check that you are signed in and Storage rules allow staff uploads'}).`,
           type: 'warning',
         });
       } finally {
@@ -452,18 +448,9 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
         setUploadStatusBanner({ text: `Successfully uploaded ${files.length} photo(s) to your Firebase Storage bucket!`, type: 'success' });
         setTimeout(() => setUploadStatusBanner(null), 4000);
       } catch (err: any) {
-        console.warn('Firebase gallery upload error, falling back to local files:', err);
-        Array.from(files).forEach((file: File) => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            if (typeof reader.result === 'string') {
-              setFormGalleryImages((prev) => [...prev, reader.result as string]);
-            }
-          };
-          reader.readAsDataURL(file);
-        });
+        console.error('Firebase gallery upload error:', err);
         setUploadStatusBanner({
-          text: `Saved locally. Note: Firebase Storage upload error (${err?.message || 'Check Storage Rules'}).`,
+          text: `Photos could not be uploaded (${err?.message || 'check that you are signed in and Storage rules allow staff uploads'}).`,
           type: 'warning',
         });
       } finally {
@@ -872,7 +859,7 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
               </div>
               <h3 className="text-xl font-black">Staff Event Editor Login</h3>
               <p className="text-xs text-blue-100/90 mt-1 leading-relaxed">
-                Sign in with official Nagarjuna staff credentials to publish events, write reports, upload photo albums, and edit event records.
+                Sign in with your school staff account to publish events, write reports, upload photo albums, and edit event records.
               </p>
             </div>
 
@@ -883,37 +870,6 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
                   <span>{loginError}</span>
                 </div>
               )}
-
-              {/* Official Credentials Info & Autofill helper */}
-              <div className="bg-blue-50/80 border border-blue-200/80 rounded-2xl p-3.5 text-xs text-slate-700">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[11px] font-bold text-blue-900 uppercase tracking-wider flex items-center gap-1.5">
-                    <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
-                    <span>Staff Login Credentials</span>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setLoginStaffId('satff@nagarjuna.school');
-                      setLoginPassword('staff@2026');
-                      setLoginError('');
-                    }}
-                    className="text-[11px] font-bold text-blue-700 bg-white hover:bg-blue-600 hover:text-white px-2.5 py-1 rounded-lg border border-blue-200 transition-all shadow-2xs"
-                  >
-                    Quick Fill
-                  </button>
-                </div>
-                <div className="space-y-1 font-mono text-[11px] text-slate-800 bg-white/70 p-2 rounded-xl border border-blue-100">
-                  <div>
-                    <span className="text-slate-500 font-sans font-medium">Email: </span>
-                    <strong className="text-blue-900 select-all">satff@nagarjuna.school</strong>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 font-sans font-medium">Password: </span>
-                    <strong className="text-blue-900 select-all">staff@2026</strong>
-                  </div>
-                </div>
-              </div>
 
               {/* Login Form */}
               <form
@@ -931,7 +887,7 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
                     type="email"
                     value={loginStaffId}
                     onChange={(e) => setLoginStaffId(e.target.value)}
-                    placeholder="satff@nagarjuna.school"
+                    placeholder="your staff email"
                     className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                     required
                   />
@@ -946,7 +902,7 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
                       type="password"
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
-                      placeholder="Enter staff@2026"
+                      placeholder="Enter your password"
                       className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl pl-3.5 pr-10 py-2.5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                       required
                     />
@@ -956,10 +912,11 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
 
                 <button
                   type="submit"
-                  className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 hover:scale-[1.02]"
+                  disabled={loginBusy}
+                  className="w-full mt-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-bold text-xs py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 hover:scale-[1.02]"
                 >
                   <LogIn className="w-4 h-4" />
-                  <span>Log In as Staff</span>
+                  <span>{loginBusy ? 'Signing in...' : 'Log In as Staff'}</span>
                 </button>
               </form>
             </div>

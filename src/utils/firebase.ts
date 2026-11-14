@@ -1,6 +1,8 @@
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getStorage, ref, uploadBytes, getDownloadURL, FirebaseStorage } from 'firebase/storage';
-import { getFirestore, Firestore, collection, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { getFirestore, connectFirestoreEmulator, Firestore, collection, getDocs, getDoc, doc, setDoc, deleteDoc, onSnapshot, writeBatch, query, limit } from 'firebase/firestore';
+import { getAuth, connectAuthEmulator, Auth, onAuthStateChanged, signInWithEmailAndPassword, signOut, User, UserCredential } from 'firebase/auth';
+import type { EventItem } from '../types';
 
 export interface FirebaseClientConfig {
   apiKey: string;
@@ -53,6 +55,9 @@ export const clearCustomFirebaseConfig = () => {
   localStorage.removeItem(STORAGE_CONFIG_KEY);
 };
 
+// Only for local testing against the Firebase emulators; never set in production.
+const useEmulator = import.meta.env.VITE_FIREBASE_EMULATOR === 'true';
+
 let cachedApp: FirebaseApp | null = null;
 let cachedStorage: FirebaseStorage | null = null;
 let cachedFirestore: Firestore | null = null;
@@ -92,6 +97,7 @@ export const getFirebaseFirestoreInstance = (): Firestore | null => {
   if (!cachedFirestore) {
     try {
       cachedFirestore = getFirestore(app);
+      if (useEmulator) connectFirestoreEmulator(cachedFirestore, '127.0.0.1', 8085);
     } catch (e) {
       console.error('Error getting firestore:', e);
     }
@@ -125,4 +131,116 @@ export const uploadEventPhotoToFirebase = async (
   const snapshot = await uploadBytes(storageRef, file);
   const downloadUrl = await getDownloadURL(snapshot.ref);
   return downloadUrl;
+};
+
+// ---------------------------------------------------------------------------
+// Staff authentication (Firebase Authentication, email + password)
+// ---------------------------------------------------------------------------
+
+let cachedAuth: Auth | null = null;
+
+export const getFirebaseAuthInstance = (): Auth | null => {
+  const app = getFirebaseApp();
+  if (!app) return null;
+  if (!cachedAuth) {
+    try {
+      cachedAuth = getAuth(app);
+      if (useEmulator) connectAuthEmulator(cachedAuth, 'http://127.0.0.1:9099', { disableWarnings: true });
+    } catch (e) {
+      console.error('Error getting auth:', e);
+    }
+  }
+  return cachedAuth;
+};
+
+export const signInWithFirebase = (email: string, password: string): Promise<UserCredential> => {
+  const auth = getFirebaseAuthInstance();
+  if (!auth) return Promise.reject(new Error('Firebase is not configured.'));
+  return signInWithEmailAndPassword(auth, email, password);
+};
+
+export const signOutFirebase = async (): Promise<void> => {
+  const auth = getFirebaseAuthInstance();
+  if (auth) await signOut(auth);
+};
+
+export const onFirebaseAuthChanged = (callback: (user: User | null) => void): (() => void) => {
+  const auth = getFirebaseAuthInstance();
+  if (!auth) return () => {};
+  return onAuthStateChanged(auth, callback);
+};
+
+export interface StaffProfileDoc {
+  name?: string;
+  role?: string;
+  department?: string;
+}
+
+/**
+ * A signed-in user counts as staff only if an administrator created a
+ * document at staff/{uid} in Firestore. Returns null when there is none.
+ */
+export const fetchStaffProfile = async (uid: string): Promise<StaffProfileDoc | null> => {
+  const db = getFirebaseFirestoreInstance();
+  if (!db) return null;
+  const snap = await getDoc(doc(db, 'staff', uid));
+  return snap.exists() ? (snap.data() as StaffProfileDoc) : null;
+};
+
+// ---------------------------------------------------------------------------
+// Shared events (Firestore collection "events")
+// ---------------------------------------------------------------------------
+
+const EVENTS_COLLECTION = 'events';
+
+// Firestore rejects `undefined` values, so strip them before writing.
+const cleanForFirestore = (event: EventItem): Record<string, unknown> =>
+  JSON.parse(JSON.stringify(event));
+
+export const subscribeToEventsCollection = (
+  onData: (events: EventItem[]) => void,
+  onError: (err: Error) => void
+): (() => void) => {
+  const db = getFirebaseFirestoreInstance();
+  if (!db) return () => {};
+  return onSnapshot(
+    collection(db, EVENTS_COLLECTION),
+    (snap) => onData(snap.docs.map((d) => ({ ...(d.data() as EventItem), id: d.id }))),
+    (err) => onError(err)
+  );
+};
+
+export const saveEventDoc = async (event: EventItem): Promise<void> => {
+  const db = getFirebaseFirestoreInstance();
+  if (!db) throw new Error('Firebase is not configured.');
+  await setDoc(doc(db, EVENTS_COLLECTION, event.id), cleanForFirestore(event));
+};
+
+export const deleteEventDoc = async (id: string): Promise<void> => {
+  const db = getFirebaseFirestoreInstance();
+  if (!db) throw new Error('Firebase is not configured.');
+  await deleteDoc(doc(db, EVENTS_COLLECTION, id));
+};
+
+/** Copies the starter events into Firestore the first time a staff member signs in. */
+export const seedEventsIfEmpty = async (events: EventItem[]): Promise<boolean> => {
+  const db = getFirebaseFirestoreInstance();
+  if (!db) return false;
+  const existing = await getDocs(query(collection(db, EVENTS_COLLECTION), limit(1)));
+  if (!existing.empty) return false;
+  const batch = writeBatch(db);
+  events.forEach((e) => batch.set(doc(db, EVENTS_COLLECTION, e.id), cleanForFirestore(e)));
+  await batch.commit();
+  return true;
+};
+
+/** Deletes every event document and writes the given list in its place. */
+export const replaceAllEventDocs = async (events: EventItem[]): Promise<void> => {
+  const db = getFirebaseFirestoreInstance();
+  if (!db) throw new Error('Firebase is not configured.');
+  const existing = await getDocs(collection(db, EVENTS_COLLECTION));
+  const batch = writeBatch(db);
+  existing.docs.forEach((d) => batch.delete(d.ref));
+  events.forEach((e) => batch.set(doc(db, EVENTS_COLLECTION, e.id), cleanForFirestore(e)));
+  await batch.commit();
 };

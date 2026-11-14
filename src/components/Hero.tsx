@@ -21,6 +21,7 @@ import {
 import { SCHOOL_INFO } from '../data/schoolData';
 import {
   getStoredEvents,
+  onEventsChanged,
   getActiveStaffUser,
   setStaffUserSession,
   StaffUser,
@@ -51,6 +52,9 @@ export const Hero: React.FC<HeroProps> = ({ onOpenApplyModal, onOpenProspectusMo
   const [customImages, setCustomImages] = useState<Record<string, string>>(() =>
     getCustomSimulatorImages()
   );
+
+  const [, setEventsTick] = useState(0);
+  useEffect(() => onEventsChanged(() => setEventsTick((n) => n + 1)), []);
 
   useEffect(() => {
     const handleUpdate = (e: Event) => {
@@ -376,7 +380,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenApplyModal, onOpenProspectusMo
         isOpen={isStaffLoginOpen}
         onClose={() => setIsStaffLoginOpen(false)}
         title="Staff Login to Edit Simulator Photos"
-        subtitle="Sign in with official Nagarjuna staff credentials (satff@nagarjuna.school / staff@2026) to edit campus simulator pictures and upload school photos."
+        subtitle="Sign in with your school staff account to edit campus simulator pictures and upload school photos."
         onSuccess={(user) => {
           setActiveStaff(user);
           setIsEditModalOpen(true);
