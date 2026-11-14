@@ -86,6 +86,14 @@ export const ContactSection: React.FC = () => {
                     >
                       💬 WhatsApp Us
                     </a>
+                    <a
+                      href={SCHOOL_INFO.youtube}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[11px] font-bold text-red-700 bg-red-100/80 hover:bg-red-200 px-2 py-0.5 rounded-md transition-colors"
+                    >
+                      ▶ YouTube
+                    </a>
                   </div>
                 </div>
               </div>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Maximize2, Sparkles, Filter } from 'lucide-react';
-import { GALLERY_IMAGES } from '../data/schoolData';
+import { GALLERY_IMAGES, SCHOOL_INFO } from '../data/schoolData';
 import { GalleryImage } from '../types';
 
 export const CampusGalleryModal: React.FC = () => {
@@ -28,6 +28,17 @@ export const CampusGalleryModal: React.FC = () => {
           <p className="mt-4 text-slate-600 text-sm sm:text-base leading-relaxed font-medium">
             Moments from school life at Nagarjuna Public School: assemblies, celebrations, competitions and our campus.
           </p>
+        </div>
+
+        <div className="text-center -mt-8 mb-10">
+          <a
+            href={SCHOOL_INFO.youtube}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-sm font-bold text-white bg-red-600 hover:bg-red-700 px-5 py-2.5 rounded-full shadow-md transition-all hover:scale-105"
+          >
+            ▶ Watch our videos on YouTube
+          </a>
         </div>
 
         {/* Category Filters */}
