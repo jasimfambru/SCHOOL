@@ -94,12 +94,12 @@ export const Header: React.FC<HeaderProps> = ({
           </a>
 
           {/* Desktop Nav Links */}
-          <nav className="hidden lg:flex items-center gap-1 xl:gap-2">
+          <nav className="hidden lg:flex items-center gap-1 xl:gap-2 lg:ml-4">
             {navLinks.map((link) => (
               <a
                 key={link.name}
                 href={link.href}
-                className="text-xs xl:text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/70 px-3.5 py-2 rounded-xl transition-all font-semibold"
+                className="whitespace-nowrap text-xs xl:text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/70 px-2.5 xl:px-3 py-2 rounded-xl transition-all font-semibold"
               >
                 {link.name}
               </a>
@@ -124,7 +124,7 @@ export const Header: React.FC<HeaderProps> = ({
             ) : (
               <button
                 onClick={() => setIsStaffLoginOpen(true)}
-                className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-blue-700 bg-slate-100/80 hover:bg-blue-50 border border-slate-200/80 px-3 py-2 rounded-full transition-all"
+                className="flex whitespace-nowrap items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-blue-700 bg-slate-100/80 hover:bg-blue-50 border border-slate-200/80 px-3 py-2 rounded-full transition-all"
                 title="Staff Login for Events & Campus Simulator"
               >
                 <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
@@ -136,14 +136,14 @@ export const Header: React.FC<HeaderProps> = ({
               href={`https://wa.me/${SCHOOL_INFO.whatsapp}?text=Hello%20Nagarjuna%20School,%20I%20would%20like%20to%20know%20details%20of%20the%20school%20and%20admissions.`}
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden xl:flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 px-3.5 py-2 rounded-full transition-all"
+              className="hidden 2xl:flex whitespace-nowrap items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 px-3.5 py-2 rounded-full transition-all"
               title="Chat on WhatsApp for School Details & Admissions"
             >
               <span>💬 WhatsApp Admissions</span>
             </a>
             <button
               onClick={onOpenApplyModal}
-              className="flex items-center gap-1.5 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 px-4 py-2.5 rounded-full shadow-md transition-all hover:scale-105"
+              className="flex whitespace-nowrap items-center gap-1.5 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 px-4 py-2.5 rounded-full shadow-md transition-all hover:scale-105"
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-300" />
               <span>Apply Now</span>
