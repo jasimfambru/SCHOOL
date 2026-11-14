@@ -20,6 +20,7 @@ export const SCHOOL_INFO = {
   whatsapp: '919182294787',
   whatsappDisplay: '+91 91822 94787',
   email: 'admissions@nagarjunaschool.edu.in',
+  youtube: 'https://www.youtube.com/@nagarjunapublicschool8400',
   workingHours: 'Mon - Sat: 8:00 AM - 4:30 PM',
   stats: {
     yearsExcellence: '28+',

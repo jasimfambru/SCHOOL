@@ -110,6 +110,22 @@ export const AboutSection: React.FC = () => {
           </div>
         </div>
 
+        {/* School Banners */}
+        <div className="mb-16 grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <img
+            src="/photos/banners/school-banner-directors.webp"
+            alt="Nagarjuna Public School, Kandukur - Skandapuri Educational Society"
+            loading="lazy"
+            className="w-full rounded-3xl border border-white shadow-md object-cover"
+          />
+          <img
+            src="/photos/banners/school-banner-dark.webp"
+            alt="Nagarjuna Public School, Kandukur - AI-Powered English Language Lab and LEAD Curriculum"
+            loading="lazy"
+            className="w-full rounded-3xl border border-white shadow-md object-cover"
+          />
+        </div>
+
         {/* Principal */}
         <div className="mb-16 bg-white/80 backdrop-blur-xl rounded-3xl border border-white shadow-md overflow-hidden grid grid-cols-1 md:grid-cols-5">
           <img

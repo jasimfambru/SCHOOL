@@ -5,6 +5,7 @@ import {
   Send,
   FileText,
   Bus,
+  Youtube,
 } from 'lucide-react';
 import { SCHOOL_INFO } from '../data/schoolData';
 
@@ -66,6 +67,14 @@ export const Footer: React.FC<FooterProps> = ({
                   className="inline-flex items-center gap-1 text-[11px] text-emerald-700 font-bold bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded-md transition-colors"
                 >
                   💬 Chat on WhatsApp
+                </a>
+                <a
+                  href={SCHOOL_INFO.youtube}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[11px] text-red-700 font-bold bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-md transition-colors"
+                >
+                  <Youtube className="w-3.5 h-3.5" /> YouTube Channel
                 </a>
               </div>
             </div>
