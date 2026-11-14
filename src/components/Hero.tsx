@@ -202,7 +202,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenApplyModal, onOpenProspectusMo
             </div>
 
             {/* Stats Row */}
-            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-8 mt-10 pt-8 border-t border-slate-200/60">
+            <div className="grid grid-cols-3 lg:flex lg:flex-wrap items-center justify-center lg:justify-start gap-3 sm:gap-8 mt-10 pt-8 border-t border-slate-200/60">
               <div className="bg-white/70 backdrop-blur-md px-5 py-3 rounded-2xl border border-white shadow-sm">
                 <p className="text-3xl font-black text-slate-900">100%</p>
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">Board Results</p>
