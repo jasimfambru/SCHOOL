@@ -1,38 +1,23 @@
-import {
-  EventItem,
-  NewsItem,
-  FacultyMember,
-  Testimonial,
-  GalleryImage,
-  FAQItem,
-  BusRoute,
-} from '../types';
+import { EventItem, GalleryImage } from '../types';
 
+// Everything here comes from the school's own banners and photos.
+// To add the Instagram or Facebook page later, just paste the link
+// between the quotes below (for example 'https://www.instagram.com/yourschool').
 export const SCHOOL_INFO = {
-  name: 'Nagarjuna School',
-  tagline: 'Empowering Young Minds for a Brighter Tomorrow.',
-  rotatingTaglines: ['Learn', 'Explore', 'Innovate', 'Achieve'],
-  established: 1998,
-  affiliation: 'CBSE Curriculum (Affiliation No: 3630129)',
-  address: 'Pampu Road, NTR Nagar, Kandukur-523105, Andhra Pradesh',
+  name: 'Nagarjuna Public School',
+  shortName: 'Nagarjuna',
+  place: 'Kandukur',
+  society: 'Skandapuri Educational Society',
+  address: 'Beside More Super Market, O.V. Road, Kandukur - 523105, Andhra Pradesh',
+  mapQuery: 'Nagarjuna Public School, O.V. Road, Kandukur 523105',
   phone: '+91 91822 94787',
   phoneRaw: '+919182294787',
+  phone2: '+91 99497 12538',
+  phone2Raw: '+919949712538',
   whatsapp: '919182294787',
-  whatsappDisplay: '+91 91822 94787',
-  email: 'admissions@nagarjunaschool.edu.in',
   youtube: 'https://www.youtube.com/@nagarjunapublicschool8400',
-  workingHours: 'Mon - Sat: 8:00 AM - 4:30 PM',
-  stats: {
-    yearsExcellence: '28+',
-    students: '5,000+',
-    expertTeachers: '180+',
-    boardResults: '100%',
-    awardsWon: '350+',
-    smartClassrooms: '45+',
-    roboticsProjects: '120+',
-    hiTechLabs: '12+',
-    busRoutes: '25+',
-  },
+  instagram: '',
+  facebook: '',
 };
 
 export const GALLERY_IMAGES: GalleryImage[] = [
@@ -214,108 +199,6 @@ export const GALLERY_IMAGES: GalleryImage[] = [
   },
 ];
 
-export const FACULTY_MEMBERS: FacultyMember[] = [
-  {
-    id: 'f1',
-    name: 'Dr. K. S. Nagaraj',
-    role: 'Principal & Academic Director',
-    qualification: 'Ph.D. in Education, M.Sc. Physics (Gold Medalist)',
-    experience: '26+ Years Experience',
-    subject: 'Academic Leadership & Physics',
-    photo: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=600&auto=format&fit=crop',
-    bio: 'Dedicated to fostering holistic growth, scientific temper, and ethical leadership in young minds.',
-  },
-  {
-    id: 'f2',
-    name: 'Mrs. Sridevi V. Rao',
-    role: 'Vice Principal',
-    qualification: 'M.A. English Literature, B.Ed, M.Phil',
-    experience: '20+ Years Experience',
-    subject: 'Humanities & Curriculum Development',
-    photo: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=600&auto=format&fit=crop',
-    bio: 'Passionate about language excellence, life skills training, and student counseling.',
-  },
-  {
-    id: 'f3',
-    name: 'Er. Rajesh Kumar Sharma',
-    role: 'Head of Robotics & AI Innovation',
-    qualification: 'M.Tech in Robotics & Mechatronics (IIT Madras)',
-    experience: '12+ Years Experience',
-    subject: 'Robotics, IoT & Artificial Intelligence',
-    photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=600&auto=format&fit=crop',
-    bio: 'Guiding students to build award-winning autonomous robots and AI algorithms for robotics competitions.',
-  },
-  {
-    id: 'f4',
-    name: 'Dr. Ananya Mukherjee',
-    role: 'Head of Department - Sciences',
-    qualification: 'Ph.D. in Organic Chemistry',
-    experience: '15+ Years Experience',
-    subject: 'Chemistry & Research Methodology',
-    photo: 'https://images.unsplash.com/photo-1580894732444-8ecded7900cd?q=80&w=600&auto=format&fit=crop',
-    bio: 'Pioneer in hands-on lab experiments and STEM research programs for high schoolers.',
-  },
-  {
-    id: 'f5',
-    name: 'Mr. David Fernandez',
-    role: 'Head of Computer Science',
-    qualification: 'M.S. in Computer Science',
-    experience: '14+ Years Experience',
-    subject: 'Python, Java & Web Engineering',
-    photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=600&auto=format&fit=crop',
-    bio: 'Fostering computational thinking, cybersecurity awareness, and software development skills.',
-  },
-  {
-    id: 'f6',
-    name: 'Coach Vikram Singh',
-    role: 'Director of Physical Education & Athletics',
-    qualification: 'M.P.Ed, NIS Certified Coach',
-    experience: '18+ Years Experience',
-    subject: 'Sports Sciences & Athletic Fitness',
-    photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=600&auto=format&fit=crop',
-    bio: 'Trained state and national champions in Athletics, Football, and Cricket.',
-  },
-];
-
-export const TESTIMONIALS: Testimonial[] = [
-  {
-    id: 't1',
-    name: 'Priyanka & Suresh Reddy',
-    role: 'Parent',
-    subtext: 'Parents of Rohan Reddy (Class X)',
-    rating: 5,
-    quote: 'Nagarjuna School has transformed our son. The Robotics & AI curriculum gave him immense confidence, and he won 1st prize at the National STEM Olympiad. The teachers are incredibly caring and approachable.',
-    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=200&auto=format&fit=crop',
-  },
-  {
-    id: 't2',
-    name: 'Arjun Verma',
-    role: 'Student',
-    subtext: 'Class XII (STEM & AI Track - School Head Boy)',
-    rating: 5,
-    quote: 'The exposure at Nagarjuna School is top-tier. From smart classrooms to building real IoT projects in the Robotics Lab, every day is an exciting journey. Thanks to our faculty, I secured admission to IIT Bombay!',
-    avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=200&auto=format&fit=crop',
-  },
-  {
-    id: 't3',
-    name: 'Dr. Meenakshi Sundaram',
-    role: 'Alumni',
-    subtext: 'Batch of 2018 (Now Neuroscientist at Oxford University)',
-    rating: 5,
-    quote: 'Nagarjuna School built my foundation in critical thinking, scientific inquiry, and discipline. The research mindset instilled in our science labs stayed with me through my medical and doctoral studies abroad.',
-    avatar: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?q=80&w=200&auto=format&fit=crop',
-  },
-  {
-    id: 't4',
-    name: 'Ramesh K. Iyer',
-    role: 'Parent',
-    subtext: 'Parent of Kavya Iyer (Class VI)',
-    rating: 5,
-    quote: 'Safety and discipline were our top priorities, and Nagarjuna School excels in both. The live GPS bus tracking and biometric campus security give us complete peace of mind every single day.',
-    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=200&auto=format&fit=crop',
-  },
-];
-
 export const EVENTS: EventItem[] = [
   {
     id: 'e1',
@@ -412,115 +295,5 @@ export const EVENTS: EventItem[] = [
     location: 'School Yard',
     publishedAt: '2026-11-11',
     isPublished: true,
-  },
-];
-
-export const NEWS_ITEMS: NewsItem[] = [
-  {
-    id: 'n1',
-    title: 'Admissions Open for Academic Session 2026-27 (Nursery to Class XII)',
-    date: 'July 25, 2026',
-    category: 'Announcement',
-    summary: 'Apply online or visit our admissions center. Limited seats available for STEM & Robotics Specialization track in Class XI.',
-    urgent: true,
-  },
-  {
-    id: 'n2',
-    title: 'Nagarjuna School Secures #1 Spot in CBSE Board Results 2026',
-    date: 'May 14, 2026',
-    category: 'Achievement',
-    summary: '100% pass rate with 42 students scoring above 98% aggregate in Class X and Class XII examinations.',
-  },
-  {
-    id: 'n3',
-    title: 'Gold Medal at World Robot Olympiad (WRO) Championship',
-    date: 'April 02, 2026',
-    category: 'Achievement',
-    summary: 'Our High School Robotics team "Nagarjuna CyberBots" won 1st Place in Autonomous AI Rover navigation.',
-  },
-  {
-    id: 'n4',
-    title: 'New Artificial Intelligence & Quantum Computing Lab Inaugurated',
-    date: 'March 10, 2026',
-    category: 'Notice',
-    summary: 'Equipped with 60 GPU workstations, IoT sensors, and high-speed fiber backbone.',
-  },
-];
-
-export const FAQ_LIST: FAQItem[] = [
-  {
-    id: 'f1',
-    question: 'What curriculum does Nagarjuna School follow?',
-    answer: 'Nagarjuna School is affiliated with the Central Board of Secondary Education (CBSE), New Delhi, and integrates STEM hands-on learning and AI/Robotics right from Primary grades.',
-    category: 'Curriculum',
-  },
-  {
-    id: 'f2',
-    question: 'How do I apply for admission for the upcoming academic session?',
-    answer: 'You can apply online via our 5-Step Admission Portal on this website, or visit our campus Admissions Helpdesk. Steps include: 1. Online Registration -> 2. Campus Visit -> 3. Interactive Student Assessment -> 4. Document Verification -> 5. Fee Payment & Seat Confirmation.',
-    category: 'Admissions',
-  },
-  {
-    id: 'f3',
-    question: 'What are the safety measures in place for students and campus?',
-    answer: 'We maintain 24/7 CCTV camera coverage across all classrooms, corridors, and grounds, biometric access gates, full-time security personnel, female attendants in buses, speed governors, and a 24-hour medical infirmary with resident healthcare professionals.',
-    category: 'Transport',
-  },
-  {
-    id: 'f4',
-    question: 'Is bus transport available across the city?',
-    answer: 'Yes! Nagarjuna School operates a fleet of 25+ air-conditioned, GPS-enabled buses covering all major residential neighborhoods in the city. Parents can track bus location in real-time through our mobile app.',
-    category: 'Transport',
-  },
-  {
-    id: 'f5',
-    question: 'What makes the Robotics & AI Lab special?',
-    answer: 'Our lab is equipped with LEGO Mindstorms, Arduino, Raspberry Pi, 3D printers, Python programming workstations, and IoT kits. Students learn real-world coding, sensor integration, and machine learning models under expert M.Tech trainers.',
-    category: 'Labs',
-  },
-  {
-    id: 'f6',
-    question: 'What sports facilities are provided on campus?',
-    answer: 'We offer an Olympic-sized football turf, floodlit basketball and volleyball courts, cricket coaching nets, synthetic badminton courts, a 400m running track, indoor table tennis, chess, and dedicated Yoga & Taekwondo centers.',
-    category: 'Sports',
-  },
-  {
-    id: 'f7',
-    question: 'What is the fee payment structure and schedule?',
-    answer: 'Tuition fees can be paid annually or in 3 flexible term installments. Payments can be completed online through our secure Fee Payment Gateway, Netbanking, UPI, or Credit/Debit Cards.',
-    category: 'Fees',
-  },
-];
-
-export const BUS_ROUTES: BusRoute[] = [
-  {
-    routeNo: 'R-01',
-    name: 'Kandukur Town & RTC Complex Route',
-    driver: 'Mr. Ramesh Babu (+91 91822 94787)',
-    contact: 'Transport Helpline: +91 91822 94787',
-    stops: ['RTC Bus Stand Kandukur', 'Clock Tower Center', 'Old Post Office', 'NTR Nagar', 'Pampu Road Campus'],
-    currentLocation: 'Clock Tower Center (Speed: 32 km/h)',
-    etaMinutes: 10,
-    status: 'On Time',
-  },
-  {
-    routeNo: 'R-05',
-    name: 'Kovur Road & Shirdi Nagar Express',
-    driver: 'Mr. Satish Kumar (+91 91822 94787)',
-    contact: 'Transport Helpline: +91 91822 94787',
-    stops: ['Kovur Road Junction', 'Shirdi Nagar Circle', 'Government Hospital Rd', 'NTR Nagar', 'Pampu Road Campus'],
-    currentLocation: 'Shirdi Nagar Circle (Approaching Stop #3)',
-    etaMinutes: 6,
-    status: 'Approaching',
-  },
-  {
-    routeNo: 'R-09',
-    name: 'Pamuru Road & Bypass Enclave',
-    driver: 'Mr. Venkat Rao (+91 91822 94787)',
-    contact: 'Transport Helpline: +91 91822 94787',
-    stops: ['Bypass Junction', 'Teachers Colony', 'Substation Center', 'Pampu Road Campus'],
-    currentLocation: 'Teachers Colony',
-    etaMinutes: 14,
-    status: 'On Time',
   },
 ];

@@ -1,6 +1,5 @@
 {
   "name": "Nagarjuna School",
-  "description": "Nagarjuna School in Kandukur, Andhra Pradesh — world-class educational institution empowering young minds with AI learning, advanced robotics, digital smart classrooms, and holistic development.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "description": "Nagarjuna Public School, Kandukur: events, photo gallery and admission enquiries.",
+  "requestFramePermissions": []
 }
