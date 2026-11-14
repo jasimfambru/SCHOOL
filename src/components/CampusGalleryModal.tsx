@@ -7,18 +7,7 @@ export const CampusGalleryModal: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [fullscreenImage, setFullscreenImage] = useState<GalleryImage | null>(null);
 
-  const categories = [
-    'All',
-    'Campus',
-    'Classroom',
-    'Robotics',
-    'Computer Lab',
-    'Library',
-    'Science Lab',
-    'Sports',
-    'Creative Arts',
-    'Events',
-  ];
+  const categories = ['All', ...Array.from(new Set(GALLERY_IMAGES.map((img) => img.category)))];
 
   const filteredImages =
     activeCategory === 'All'
@@ -34,15 +23,15 @@ export const CampusGalleryModal: React.FC = () => {
             <span>Visual Experience</span>
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900">
-            Nagarjuna Campus Gallery
+            School Photo Gallery
           </h2>
           <p className="mt-4 text-slate-600 text-sm sm:text-base leading-relaxed font-medium">
-            Take a visual tour through our sprawling 15-acre campus, robotics labs, smart classrooms, sports arenas, and cultural celebrations.
+            Moments from school life at Nagarjuna Public School: assemblies, celebrations, competitions and our campus.
           </p>
         </div>
 
         {/* Category Filters */}
-        <div className="flex items-center justify-center gap-2 overflow-x-auto pb-4 mb-10 scrollbar-none">
+        <div className="flex items-center justify-start sm:justify-center gap-2 overflow-x-auto pb-4 mb-10 scrollbar-none">
           {categories.map((cat) => (
             <button
               key={cat}
@@ -67,8 +56,9 @@ export const CampusGalleryModal: React.FC = () => {
               className="group relative rounded-3xl overflow-hidden bg-white/80 border border-white cursor-pointer aspect-[4/3] shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
             >
               <img
-                src={img.url}
+                src={img.thumb || img.url}
                 alt={img.title}
+                loading="lazy"
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent opacity-75 group-hover:opacity-90 transition-opacity"></div>
@@ -107,11 +97,11 @@ export const CampusGalleryModal: React.FC = () => {
             </button>
 
             <div className="max-w-4xl w-full space-y-4 text-center">
-              <div className="relative aspect-[16/10] rounded-3xl overflow-hidden border border-white shadow-2xl">
+              <div className="relative h-[60vh] rounded-3xl overflow-hidden border border-white shadow-2xl bg-slate-900/80">
                 <img
                   src={fullscreenImage.url}
                   alt={fullscreenImage.title}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain"
                 />
               </div>
 

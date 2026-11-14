@@ -150,6 +150,7 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
     'Cultural',
     'Exhibition',
     'Annual Day',
+    'Competition',
   ];
 
   const filteredEvents = events.filter((evt) => {
@@ -1059,6 +1060,7 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
                     <option value="Cultural">Cultural</option>
                     <option value="Exhibition">Exhibition</option>
                     <option value="Annual Day">Annual Day</option>
+                    <option value="Competition">Competition</option>
                   </select>
                 </div>
               </div>

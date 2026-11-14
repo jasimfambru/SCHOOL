@@ -106,7 +106,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenApplyModal, onOpenProspectusMo
       badge: 'Eco-Friendly',
       title: 'Nagarjuna Green Campus',
       desc: '15-acre sprawling Wi-Fi campus with solar architecture and climate-controlled academic facilities in Kandukur.',
-      image: customImages['building'] || 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?q=80&w=1200&auto=format&fit=crop',
+      image: customImages['building'] || '/photos/campus/school-building-welcome-back.webp',
     },
     {
       id: 'smart_classroom' as CampusHotspot,
