@@ -55,7 +55,7 @@ export const AboutSection: React.FC = () => {
             <div className="relative rounded-[2.5rem] overflow-hidden border border-white shadow-2xl group bg-white/70 backdrop-blur-xl p-3">
               <div className="rounded-[2rem] overflow-hidden relative">
                 <img
-                  src="https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?q=80&w=1000&auto=format&fit=crop"
+                  src="/photos/campus/school-building-welcome-back.webp"
                   alt="Nagarjuna School Campus"
                   className="w-full h-[420px] object-cover group-hover:scale-105 transition-transform duration-700"
                 />
@@ -107,6 +107,23 @@ export const AboutSection: React.FC = () => {
                 </p>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Principal */}
+        <div className="mb-16 bg-white/80 backdrop-blur-xl rounded-3xl border border-white shadow-md overflow-hidden grid grid-cols-1 md:grid-cols-5">
+          <img
+            src="/photos/principal/principal-at-office-desk.webp"
+            alt="Our Principal at her desk"
+            loading="lazy"
+            className="w-full h-full object-cover md:col-span-2 min-h-[260px]"
+          />
+          <div className="p-8 md:col-span-3 flex flex-col justify-center">
+            <span className="text-xs font-bold text-blue-600 uppercase tracking-widest">Leadership</span>
+            <h3 className="text-2xl font-black text-slate-900 mt-1">Our Principal</h3>
+            <p className="text-slate-600 text-sm leading-relaxed mt-3">
+              Nagarjuna Public School is guided by a Principal who knows every child and is always available to listen to students, parents and teachers.
+            </p>
           </div>
         </div>
 

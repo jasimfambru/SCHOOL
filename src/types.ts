@@ -2,7 +2,7 @@ export interface EventItem {
   id: string;
   title: string;
   date: string;
-  category: 'Academic' | 'Robotics & AI' | 'Sports' | 'Cultural' | 'Exhibition' | 'Celebration' | 'Annual Day';
+  category: 'Academic' | 'Robotics & AI' | 'Sports' | 'Cultural' | 'Exhibition' | 'Celebration' | 'Annual Day' | 'Competition';
   description: string; // The matter / event writeup / details
   image: string; // Cover photo
   galleryImages?: string[]; // Multiple photos uploaded by staff
@@ -48,6 +48,7 @@ export interface GalleryImage {
   title: string;
   category: string;
   url: string;
+  thumb?: string;
   description: string;
 }
 

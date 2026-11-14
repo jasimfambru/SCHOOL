@@ -3,6 +3,7 @@ import { Header } from './components/Header';
 import { Hero } from './components/Hero';
 import { AboutSection } from './components/AboutSection';
 import { EventsSection } from './components/EventsSection';
+import { CampusGalleryModal } from './components/CampusGalleryModal';
 import { ComputerLab } from './components/ComputerLab';
 import { AchievementsSection } from './components/AchievementsSection';
 import { ContactSection } from './components/ContactSection';
@@ -54,6 +55,7 @@ export const App: React.FC = () => {
 
           {/* 2. School Events, Celebrations & Reports Showcase */}
           <EventsSection />
+          <CampusGalleryModal />
 
           {/* 3. About School & Core Mission */}
           <AboutSection />

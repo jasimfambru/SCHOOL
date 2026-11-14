@@ -1,7 +1,7 @@
 import { EventItem } from '../types';
 import { EVENTS } from '../data/schoolData';
 
-const STORAGE_KEY = 'nagarjuna_school_events';
+const STORAGE_KEY = 'nagarjuna_school_events_v2';
 const AUTH_KEY = 'nagarjuna_staff_auth';
 
 export interface StaffUser {
