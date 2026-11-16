@@ -149,9 +149,12 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
   useEffect(() => {
     startFirebaseSync();
     const stopChanges = onEventsChanged(() => setEvents(getStoredEvents()));
-    const stopErrors = onEventsSyncError((message) =>
-      window.alert(`The shared events database reported a problem: ${message}`)
-    );
+    // Only staff are told about failed saves; visitors never see database errors.
+    const stopErrors = onEventsSyncError((message) => {
+      if (getActiveStaffUser()) {
+        window.alert(`The shared events database reported a problem: ${message}`);
+      }
+    });
     return () => {
       stopChanges();
       stopErrors();

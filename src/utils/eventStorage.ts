@@ -144,7 +144,10 @@ export const startFirebaseSync = (): void => {
       // An empty collection means "not seeded yet": keep showing the starter events.
       if (events.length > 0) setSharedEvents(sortNewestFirst(events));
     },
-    reportSyncError
+    // Visitors must never see a database error pop-up. If events cannot be read
+    // (for example the security rules are not published yet), keep showing the
+    // cached or starter events and only log the problem for the administrator.
+    (err) => console.warn('Could not read shared events, showing starter events instead:', err)
   );
 
   onFirebaseAuthChanged(async (user) => {
