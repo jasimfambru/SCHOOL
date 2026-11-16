@@ -117,7 +117,7 @@ export const isFirebaseConfigured = (): boolean => {
 export const uploadEventPhotoToFirebase = async (
   file: File | Blob,
   filename?: string,
-  folder: string = 'events'
+  folder: string = 'website-events'
 ): Promise<string> => {
   const storage = getFirebaseStorageInstance();
   if (!storage) {
@@ -136,6 +136,8 @@ export const uploadEventPhotoToFirebase = async (
 // ---------------------------------------------------------------------------
 // Staff authentication (Firebase Authentication, email + password)
 // ---------------------------------------------------------------------------
+
+const STAFF_COLLECTION = 'websiteStaff';
 
 let cachedAuth: Auth | null = null;
 
@@ -178,12 +180,12 @@ export interface StaffProfileDoc {
 
 /**
  * A signed-in user counts as staff only if an administrator created a
- * document at staff/{uid} in Firestore. Returns null when there is none.
+ * document at websiteStaff/{uid} in Firestore. Returns null when there is none.
  */
 export const fetchStaffProfile = async (uid: string): Promise<StaffProfileDoc | null> => {
   const db = getFirebaseFirestoreInstance();
   if (!db) return null;
-  const snap = await getDoc(doc(db, 'staff', uid));
+  const snap = await getDoc(doc(db, STAFF_COLLECTION, uid));
   return snap.exists() ? (snap.data() as StaffProfileDoc) : null;
 };
 
@@ -191,7 +193,9 @@ export const fetchStaffProfile = async (uid: string): Promise<StaffProfileDoc | 
 // Shared events (Firestore collection "events")
 // ---------------------------------------------------------------------------
 
-const EVENTS_COLLECTION = 'events';
+// Names are prefixed with "website" so they can never clash with another app
+// that uses the same Firebase project.
+const EVENTS_COLLECTION = 'websiteEvents';
 
 // Firestore rejects `undefined` values, so strip them before writing.
 const cleanForFirestore = (event: EventItem): Record<string, unknown> =>
