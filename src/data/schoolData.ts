@@ -31,11 +31,11 @@ export const GALLERY_IMAGES: GalleryImage[] = [
   },
   {
     id: 'g2',
-    title: 'Our Principal',
-    category: 'Principal',
-    url: '/photos/principal/principal-at-office-desk.webp',
-    thumb: '/photos/principal/principal-at-office-desk-thumb.webp',
-    description: 'Our Principal at work in the school office.',
+    title: 'Our Director',
+    category: 'Director',
+    url: '/photos/director/director-at-office-desk.webp',
+    thumb: '/photos/director/director-at-office-desk-thumb.webp',
+    description: 'Our Director at work in the school office.',
   },
   {
     id: 'g3',

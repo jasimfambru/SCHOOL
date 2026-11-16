@@ -7,14 +7,14 @@ export const LeadershipSection: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid md:grid-cols-5 bg-white rounded-3xl overflow-hidden shadow-2xl shadow-[#0f1f4d]/10">
           <img
-            src="/photos/principal/principal-at-office-desk.webp"
-            alt="Our Principal at her desk"
+            src="/photos/director/director-at-office-desk.webp"
+            alt="Our Director at her desk"
             loading="lazy"
             className="w-full h-full object-cover md:col-span-2 min-h-[280px]"
           />
           <div className="md:col-span-3 p-8 sm:p-12 flex flex-col justify-center">
             <small className="text-[#c8202f] font-extrabold tracking-[0.25em] text-xs">LEADERSHIP</small>
-            <h2 className="text-2xl sm:text-3xl font-black text-[#0f1f4d] mt-2 mb-4">Our Principal</h2>
+            <h2 className="text-2xl sm:text-3xl font-black text-[#0f1f4d] mt-2 mb-4">Our Director</h2>
             <p className="text-slate-600 leading-relaxed">
               At {SCHOOL_INFO.name}, students and parents can speak openly with the school's leadership. Through the
               "Talk and Heal" platform, Class X students share their concerns with the Director and get them sorted out
