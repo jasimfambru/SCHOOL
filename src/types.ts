@@ -6,6 +6,7 @@ export interface EventItem {
   description: string; // The matter / event writeup / details
   image: string; // Cover photo
   galleryImages?: string[]; // Multiple photos uploaded by staff
+  videoUrl?: string; // Optional YouTube link shown on the event page
   location: string;
   staffInCharge?: string; // Staff member who organized / uploaded the event
   highlights?: string[]; // Key highlights or prize winners
