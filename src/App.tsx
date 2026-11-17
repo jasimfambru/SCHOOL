@@ -5,6 +5,7 @@ import { AboutSection } from './components/AboutSection';
 import { EventsSection } from './components/EventsSection';
 import { LeadershipSection } from './components/LeadershipSection';
 import { CampusGalleryModal } from './components/CampusGalleryModal';
+import { AppsSection } from './components/AppsSection';
 import { ConnectSection } from './components/ConnectSection';
 import { ContactSection } from './components/ContactSection';
 import { Footer } from './components/Footer';
@@ -26,6 +27,7 @@ export const App: React.FC = () => {
         <EventsSection />
         <LeadershipSection />
         <CampusGalleryModal />
+        <AppsSection />
         <ConnectSection />
         <ContactSection />
       </main>

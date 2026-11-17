@@ -16,6 +16,8 @@ export const SCHOOL_INFO = {
   phone2Raw: '+919949712538',
   whatsapp: '919182294787',
   youtube: 'https://www.youtube.com/@nagarjunapublicschool8400',
+  parentApp: 'https://play.google.com/store/apps/details?id=com.nagarjunapublicschool.parent&hl=en_IN',
+  staffApp: 'https://play.google.com/store/apps/details?id=com.nagarjunaschool.staff&hl=en_IN',
   instagram: '',
   facebook: '',
 };

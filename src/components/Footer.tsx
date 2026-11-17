@@ -30,6 +30,7 @@ export const Footer: React.FC = () => {
               ['About', '#about'],
               ['Events', '#events'],
               ['Photo Gallery', '#gallery'],
+              ['Download Apps', '#apps'],
               ['Admissions', '#admissions'],
               ['Contact', '#contact'],
             ].map(([name, href]) => (
@@ -43,6 +44,19 @@ export const Footer: React.FC = () => {
         <div>
           <h4 className="text-white font-bold mb-4">Follow us</h4>
           <SocialButtons onDark />
+          <h4 className="text-white font-bold mt-6 mb-3">Our apps</h4>
+          <ul className="space-y-2">
+            <li>
+              <a href={SCHOOL_INFO.parentApp} target="_blank" rel="noopener noreferrer" className="hover:text-white">
+                Parent App on Google Play
+              </a>
+            </li>
+            <li>
+              <a href={SCHOOL_INFO.staffApp} target="_blank" rel="noopener noreferrer" className="hover:text-white">
+                Staff App on Google Play
+              </a>
+            </li>
+          </ul>
         </div>
       </div>
       <div className="border-t border-white/10 py-5 text-center text-xs">
