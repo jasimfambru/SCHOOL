@@ -16,15 +16,23 @@ export interface FirebaseClientConfig {
 // Check local storage config cache or environment variables
 const STORAGE_CONFIG_KEY = 'nagarjuna_firebase_custom_config';
 
+// People often copy lines straight from the Firebase snippet, so a value can arrive
+// as  "AIza...",  (with quote marks and a trailing comma). Strip those and any spaces.
+const cleanEnvValue = (value: unknown): string =>
+  String(value ?? '')
+    .trim()
+    .replace(/^[\s"'`]+/, '')
+    .replace(/[\s"'`,;]+$/, '');
+
 export const getFirebaseConfig = (): FirebaseClientConfig | null => {
   // 1. Check if user configured in env variables
   const envConfig: FirebaseClientConfig = {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
-    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
-    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
-    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
-    appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
+    apiKey: cleanEnvValue(import.meta.env.VITE_FIREBASE_API_KEY),
+    authDomain: cleanEnvValue(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN),
+    projectId: cleanEnvValue(import.meta.env.VITE_FIREBASE_PROJECT_ID),
+    storageBucket: cleanEnvValue(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET),
+    messagingSenderId: cleanEnvValue(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID),
+    appId: cleanEnvValue(import.meta.env.VITE_FIREBASE_APP_ID),
   };
 
   if (envConfig.apiKey && envConfig.projectId && envConfig.storageBucket) {
