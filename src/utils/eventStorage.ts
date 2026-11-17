@@ -358,6 +358,29 @@ export const signInStaff = async (
     if (code === 'auth/network-request-failed') {
       return { success: false, error: 'Network problem. Check your connection and try again.' };
     }
+    if (code === 'auth/user-disabled') {
+      return { success: false, error: 'This account has been disabled in Firebase.' };
+    }
+    if (code === 'auth/operation-not-allowed') {
+      return {
+        success: false,
+        error: 'Email/password sign-in is turned off in Firebase. Turn it on under Authentication, Sign-in method.',
+      };
+    }
+    if (code === 'auth/invalid-api-key' || code === 'auth/api-key-not-valid' || code === 'auth/configuration-not-found') {
+      return {
+        success: false,
+        error: 'The Firebase settings on the website are not correct. Check the six VITE_FIREBASE values in Vercel and redeploy.',
+      };
+    }
+    if (code === 'permission-denied') {
+      // Signed in to Firebase but the staff list could not be read: do not leave the session open.
+      await signOutFirebase().catch(() => {});
+      return {
+        success: false,
+        error: 'Your password is right, but the school database rules do not allow the check yet. The administrator must publish the Firestore rules.',
+      };
+    }
     console.error('Staff sign-in error:', err);
     return { success: false, error: 'Could not sign in. Please try again.' };
   }
