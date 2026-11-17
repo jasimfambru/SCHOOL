@@ -14,6 +14,7 @@ const navLinks = [
   { name: 'About', href: '#about' },
   { name: 'Events', href: '#events' },
   { name: 'Gallery', href: '#gallery' },
+  { name: 'Apps', href: '#apps' },
   { name: 'Admissions', href: '#admissions' },
   { name: 'Contact', href: '#contact' },
 ];
@@ -80,12 +81,12 @@ export const Header: React.FC<HeaderProps> = ({ onOpenApplyModal }) => {
           <a href="#top" className="flex items-center gap-3">
             <img src="/logo.png" alt={`${SCHOOL_INFO.name} logo`} className="w-14 h-14 object-contain" />
             <div className="leading-tight">
-              <div className="font-black text-lg sm:text-xl text-[#0f1f4d] tracking-wide">NAGARJUNA PUBLIC SCHOOL</div>
+              <div className="font-black text-base lg:text-base xl:text-xl text-[#0f1f4d] tracking-wide whitespace-nowrap">NAGARJUNA PUBLIC SCHOOL</div>
               <div className="text-[11px] font-bold tracking-[0.3em] text-[#c8202f]">KANDUKUR</div>
             </div>
           </a>
 
-          <nav className="hidden lg:flex items-center gap-7 text-[15px] font-semibold text-slate-800">
+          <nav className="hidden lg:flex items-center gap-4 xl:gap-7 text-sm xl:text-[15px] font-semibold text-slate-800 whitespace-nowrap">
             {navLinks.map((l) => (
               <a key={l.name} href={l.href} className="hover:text-[#c8202f] transition-colors">
                 {l.name}
@@ -96,7 +97,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenApplyModal }) => {
           <div className="flex items-center gap-3">
             <button
               onClick={onOpenApplyModal}
-              className="hidden sm:inline-flex bg-[#c8202f] hover:bg-[#a81a27] text-white font-bold text-sm px-6 py-2.5 rounded-full shadow-md transition-all"
+              className="hidden sm:inline-flex whitespace-nowrap bg-[#c8202f] hover:bg-[#a81a27] text-white font-bold text-sm px-5 xl:px-6 py-2.5 rounded-full shadow-md transition-all"
             >
               Apply Now
             </button>
