@@ -61,3 +61,16 @@ signs in, the starter events are copied into `websiteEvents`. After that, staff 
 
 - Event photos uploaded by staff go to Firebase Storage (images only, under 10 MB).
 - Until step 1 is done, staff sign-in says "not set up yet" and the site shows the starter events.
+
+## Posting events: limits
+
+| Item | Minimum | Maximum |
+|---|---|---|
+| Event title | 3 characters | 120 characters |
+| Writeup | 20 characters | 5000 characters |
+| Photo file size | 10 KB | 10 MB each |
+| Photos per event | 1 (a cover photo) | 20 in the album |
+| Photo type | JPG, PNG or WebP | |
+
+Videos are not uploaded to the website. Put the video on the school's YouTube channel and
+paste its link in the "YouTube video link" box; it plays on the event page.

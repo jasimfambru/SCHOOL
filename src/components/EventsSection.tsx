@@ -30,7 +30,9 @@ import {
   Loader2,
   ExternalLink,
   CheckCircle2,
+  Youtube,
 } from 'lucide-react';
+import { EVENT_LIMITS, checkPhoto, parseYouTubeId, youTubeWatchUrl, youTubeEmbedUrl } from '../utils/eventLimits';
 import { EventItem } from '../types';
 import {
   getStoredEvents,
@@ -90,6 +92,7 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
   const [formDescription, setFormDescription] = useState('');
   const [formImage, setFormImage] = useState('');
   const [formGalleryImages, setFormGalleryImages] = useState<string[]>([]);
+  const [formVideoUrl, setFormVideoUrl] = useState('');
   const [formHighlightInput, setFormHighlightInput] = useState('');
   const [formHighlights, setFormHighlights] = useState<string[]>([]);
   const [formNotification, setFormNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -240,6 +243,7 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
     setFormDescription('');
     setFormImage('');
     setFormGalleryImages([]);
+    setFormVideoUrl('');
     setFormHighlights(['Active Student Participation', 'Faculty Coordination']);
     setFormNotification(null);
     setIsEditorModalOpen(true);
@@ -256,6 +260,7 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
     setFormDescription(evt.description);
     setFormImage(evt.image);
     setFormGalleryImages(evt.galleryImages || []);
+    setFormVideoUrl(evt.videoUrl || '');
     setFormHighlights(evt.highlights || []);
     setFormNotification(null);
     setIsEditorModalOpen(true);
@@ -264,12 +269,25 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
   // Save Event (Create or Update)
   const handleSaveEvent = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formTitle.trim()) {
-      setFormNotification({ message: 'Event title is required.', type: 'error' });
+    const { title, description, photos } = EVENT_LIMITS;
+    const titleLen = formTitle.trim().length;
+    const descLen = formDescription.trim().length;
+    if (titleLen < title.min || titleLen > title.max) {
+      setFormNotification({ message: `Event title must be ${title.min} to ${title.max} characters (now ${titleLen}).`, type: 'error' });
       return;
     }
-    if (!formDescription.trim()) {
-      setFormNotification({ message: 'Please provide the writeup matter for this event.', type: 'error' });
+    if (descLen < description.min || descLen > description.max) {
+      setFormNotification({ message: `The writeup must be ${description.min} to ${description.max} characters (now ${descLen}).`, type: 'error' });
+      return;
+    }
+    if (!formImage.trim() && formGalleryImages.length < photos.minCount) {
+      setFormNotification({ message: `Add at least ${photos.minCount} photo (a cover photo) to the event.`, type: 'error' });
+      return;
+    }
+    const videoText = formVideoUrl.trim();
+    const videoId = videoText ? parseYouTubeId(videoText) : null;
+    if (videoText && !videoId) {
+      setFormNotification({ message: 'The video link is not a valid YouTube link. Paste the address from YouTube, for example https://www.youtube.com/watch?v=...', type: 'error' });
       return;
     }
 
@@ -283,6 +301,7 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
       image: formImage.trim() || PRESET_EVENT_IMAGES[0].url,
       galleryImages: formGalleryImages.length > 0 ? formGalleryImages : [formImage.trim() || PRESET_EVENT_IMAGES[0].url],
       highlights: formHighlights.filter((h) => h.trim().length > 0),
+      videoUrl: videoId ? youTubeWatchUrl(videoId) : undefined,
     };
 
     if (editingEventId) {
@@ -405,7 +424,14 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
   // Handle Cover Photo Upload (Direct to Firebase Storage if configured, fallback to local dataURL)
   const handleCoverFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
+
+    const problem = checkPhoto(file);
+    if (problem) {
+      setUploadStatusBanner({ text: problem, type: 'warning' });
+      return;
+    }
 
     if (isFirebaseConfigured()) {
       setIsUploadingCover(true);
@@ -437,19 +463,40 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
 
   // Handle Multi Photo Upload for Gallery (Direct to Firebase Storage if configured)
   const handleGalleryFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+    const chosen = e.target.files ? (Array.from(e.target.files) as File[]) : [];
+    e.target.value = '';
+    if (chosen.length === 0) return;
+
+    // Check each photo against the limits; upload only the good ones.
+    const problems: string[] = [];
+    let fileList = chosen.filter((f) => {
+      const problem = checkPhoto(f);
+      if (problem) problems.push(problem);
+      return !problem;
+    });
+    const room = EVENT_LIMITS.photos.maxGallery - formGalleryImages.length;
+    if (fileList.length > room) {
+      problems.push(`An album can hold ${EVENT_LIMITS.photos.maxGallery} photos; ${fileList.length - Math.max(room, 0)} extra photo(s) were not added.`);
+      fileList = fileList.slice(0, Math.max(room, 0));
+    }
+    if (problems.length > 0) {
+      setUploadStatusBanner({ text: problems.join(' '), type: 'warning' });
+    }
+    if (fileList.length === 0) return;
+    const files = fileList;
 
     if (isFirebaseConfigured()) {
       setIsUploadingGallery(true);
       setUploadStatusBanner({ text: `Uploading ${files.length} photo(s) to your Firebase Cloud Storage...`, type: 'info' });
       try {
-        const fileList = Array.from(files) as File[];
         const uploadPromises = fileList.map((f: File) => uploadEventPhotoToFirebase(f, f.name));
         const urls = await Promise.all(uploadPromises);
         setFormGalleryImages((prev) => [...prev, ...urls]);
-        setUploadStatusBanner({ text: `Successfully uploaded ${files.length} photo(s) to your Firebase Storage bucket!`, type: 'success' });
-        setTimeout(() => setUploadStatusBanner(null), 4000);
+        setUploadStatusBanner({
+          text: `Successfully uploaded ${files.length} photo(s)${problems.length ? '. Some photos were skipped: ' + problems.join(' ') : '!'}`,
+          type: problems.length ? 'warning' : 'success',
+        });
+        if (!problems.length) setTimeout(() => setUploadStatusBanner(null), 4000);
       } catch (err: any) {
         console.error('Firebase gallery upload error:', err);
         setUploadStatusBanner({
@@ -460,7 +507,7 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
         setIsUploadingGallery(false);
       }
     } else {
-      Array.from(files).forEach((file: File) => {
+      files.forEach((file: File) => {
         const reader = new FileReader();
         reader.onload = () => {
           if (typeof reader.result === 'string') {
@@ -704,6 +751,13 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
                       {evt.category}
                     </span>
                   </div>
+
+                  {evt.videoUrl && (
+                    <span className="absolute bottom-3 left-3 bg-red-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
+                      <Youtube className="w-3 h-3" />
+                      <span>Video</span>
+                    </span>
+                  )}
 
                   {evt.galleryImages && evt.galleryImages.length > 1 && (
                     <span className="absolute bottom-3 right-3 bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
@@ -994,9 +1048,13 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
                 <div className="sm:col-span-2">
                   <label className="text-xs font-bold text-slate-700 block mb-1">
                     Event Title <span className="text-red-500">*</span>
+                    <span className="text-[10px] text-slate-400 font-normal ml-1.5">
+                      {EVENT_LIMITS.title.min}-{EVENT_LIMITS.title.max} characters ({formTitle.trim().length} now)
+                    </span>
                   </label>
                   <input
                     type="text"
+                    maxLength={EVENT_LIMITS.title.max}
                     value={formTitle}
                     onChange={(e) => setFormTitle(e.target.value)}
                     placeholder="e.g. State Level Robotics Conclave 2026"
@@ -1071,10 +1129,19 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
               <div>
                 <label className="text-xs font-bold text-slate-700 block mb-1 flex items-center justify-between">
                   <span>Event Writeup / Description Matter <span className="text-red-500">*</span></span>
-                  <span className="text-[10px] text-slate-400 font-normal">{formDescription.length} characters</span>
+                  <span
+                    className={`text-[10px] font-normal ${
+                      formDescription.trim().length > 0 && formDescription.trim().length < EVENT_LIMITS.description.min
+                        ? 'text-red-500'
+                        : 'text-slate-400'
+                    }`}
+                  >
+                    {formDescription.trim().length} / {EVENT_LIMITS.description.max} characters (minimum {EVENT_LIMITS.description.min})
+                  </span>
                 </label>
                 <textarea
                   rows={4}
+                  maxLength={EVENT_LIMITS.description.max}
                   value={formDescription}
                   onChange={(e) => setFormDescription(e.target.value)}
                   placeholder="Enter the full event report, speech summaries, guest details, and student participation highlights..."
@@ -1194,14 +1261,12 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
                           : 'Click to upload cover image from device'}
                       </p>
                       <p className="text-[10px] text-slate-400">
-                        {isFirebaseConnected
-                          ? 'Stored in Firebase Storage bucket • PNG, JPG, WebP'
-                          : 'PNG, JPG, WebP supported'}
+                        JPG, PNG or WebP · 10 KB to 10 MB per photo · at least 1 photo required
                       </p>
                       <input
                         ref={fileInputRef}
                         type="file"
-                        accept="image/*"
+                        accept="image/jpeg,image/png,image/webp"
                         disabled={isUploadingCover}
                         onChange={handleCoverFileUpload}
                         className="hidden"
@@ -1349,11 +1414,12 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
                           </>
                         )}
                       </button>
+                      <span className="text-[10px] text-slate-400">Up to {EVENT_LIMITS.photos.maxGallery} photos in an album</span>
                     </div>
                     <input
                       ref={galleryFileInputRef}
                       type="file"
-                      accept="image/*"
+                      accept="image/jpeg,image/png,image/webp"
                       multiple
                       disabled={isUploadingGallery}
                       onChange={handleGalleryFileUpload}
@@ -1378,6 +1444,33 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
                     </div>
                   )}
                 </div>
+              </div>
+
+              {/* Row 4b: YouTube video link */}
+              <div className="space-y-1.5 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                <label className="text-xs font-bold text-slate-900 flex items-center gap-1.5" htmlFor="event-video-url">
+                  <Youtube className="w-4 h-4 text-red-600" />
+                  <span>YouTube video link (optional)</span>
+                </label>
+                <input
+                  id="event-video-url"
+                  type="text"
+                  value={formVideoUrl}
+                  onChange={(e) => setFormVideoUrl(e.target.value)}
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  className="w-full text-xs bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                />
+                {formVideoUrl.trim() === '' ? (
+                  <p className="text-[10px] text-slate-400">
+                    Upload the video to the school's YouTube channel first, then paste its link here. The video plays on the event page.
+                  </p>
+                ) : parseYouTubeId(formVideoUrl) ? (
+                  <p className="text-[10px] text-emerald-600 font-semibold">Video found. It will play on the event page.</p>
+                ) : (
+                  <p className="text-[10px] text-red-500 font-semibold">
+                    This is not a valid YouTube link. Copy the address from YouTube's Share button.
+                  </p>
+                )}
               </div>
 
               {/* Row 5: Highlights / Honors Tags */}
@@ -1614,6 +1707,37 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
                   </div>
                 </div>
               )}
+
+              {/* Event video (YouTube) */}
+              {selectedEventModal.videoUrl &&
+                (() => {
+                  const videoId = parseYouTubeId(selectedEventModal.videoUrl);
+                  if (!videoId) return null;
+                  return (
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-black uppercase text-slate-400 tracking-wider">Event Video</h4>
+                      <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-black">
+                        <iframe
+                          src={youTubeEmbedUrl(videoId)}
+                          title={`${selectedEventModal.title} video`}
+                          allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                          loading="lazy"
+                          referrerPolicy="strict-origin-when-cross-origin"
+                          className="absolute inset-0 w-full h-full border-0"
+                        />
+                      </div>
+                      <a
+                        href={youTubeWatchUrl(videoId)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-red-600 hover:text-red-700"
+                      >
+                        <Youtube className="w-3.5 h-3.5" /> Watch on YouTube
+                      </a>
+                    </div>
+                  );
+                })()}
 
               {/* Event Matter Report Text */}
               <div className="space-y-2">
