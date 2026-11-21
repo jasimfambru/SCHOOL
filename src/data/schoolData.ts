@@ -18,8 +18,8 @@ export const SCHOOL_INFO = {
   youtube: 'https://www.youtube.com/@nagarjunapublicschool8400',
   parentApp: 'https://play.google.com/store/apps/details?id=com.nagarjunapublicschool.parent&hl=en_IN',
   staffApp: 'https://play.google.com/store/apps/details?id=com.nagarjunaschool.staff&hl=en_IN',
-  instagram: '',
-  facebook: '',
+  instagram: 'https://www.instagram.com/nagarjunaschool.official/',
+  facebook: 'https://www.facebook.com/profile.php?id=61596966173044',
 };
 
 export const GALLERY_IMAGES: GalleryImage[] = [
